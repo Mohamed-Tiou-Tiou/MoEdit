@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <ncurses.h>
 
 int main_window_y = 0, main_window_x = 0;
@@ -19,12 +20,36 @@ void normal_mode(int key_pressed, int cursor_y, int cursor_x);
 void command_mode(int key_pressed);
 void command_mode_parser(char *command_input);
 
+struct Node
+{
+	char character;
+
+	struct Node *prev;
+	struct Node *next;
+
+};
+
+struct Node *create_node(char new_character)
+{
+	struct Node *new_node = (struct Node*)malloc(sizeof(struct Node));
+	if (new_node == NULL)
+	{
+		printf("Memory allocation of the new node failed!\n");
+		endwin();
+	}
+	new_node->character = new_character;
+	new_node->prev = NULL;
+	new_node->next = NULL;
+
+	return new_node;
+}
+
 int main(int argc, char* argv[])
 {
 	if (argc > 2)
 	{
-		printf("fucker you cant enter more than 1 argument, so do ./editor filename.txt\n");
-		printf("you entered %d arguments\n", argc);
+		printf("You cant enter more than 1 argument, so do ./editor filename.txt\n");
+		printf("You entered %d arguments\n", argc);
 		endwin();
 	}
 	else
@@ -43,12 +68,12 @@ void window_initialisation()
 	initscr();
 	noecho();
 	cbreak();
-	//getyx(stdscr, main_window_y, main_window_x);
+	getyx(stdscr, main_window_y, main_window_x);
 	main_window = newwin(main_window_y, main_window_x, 0, 0);
 	if (main_window == NULL)
 	{
 		endwin();
-		printf("There was an error initialising the window, no fucking clue why :3\n");
+		printf("There was an error initialising the window. Try to execute it again\n");
 	}
 	refresh();
 	box(main_window, main_window_y, main_window_x);
@@ -65,7 +90,7 @@ void initiate_reading_printing(char *file_name)
 	int line = 0, row = 0;
 	while (fgets(buffer_for_text, sizeof(buffer_for_text), file))
 	{
-		mvwprintw(main_window, line++, row++, "%s", buffer_for_text);
+		mvwprintw(main_window, line++, row, "%s", buffer_for_text);
 	}
 
 	wrefresh(main_window);
