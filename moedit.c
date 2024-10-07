@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <ncurses.h>
 
-int main_window_y = 0, main_window_x = 0;
-WINDOW *main_window;
 
 #define ESC_KEY 27
 #define COLON_KEY 58
@@ -32,17 +30,23 @@ struct Node
 struct Node *create_node(char new_character)
 {
 	struct Node *new_node = (struct Node*)malloc(sizeof(struct Node));
+
 	if (new_node == NULL)
 	{
 		printf("Memory allocation of the new node failed!\n");
 		endwin();
 	}
+
 	new_node->character = new_character;
 	new_node->prev = NULL;
 	new_node->next = NULL;
 
 	return new_node;
 }
+
+WINDOW* main_window;
+int main_window_y = 0;
+int main_window_x = 0;
 
 int main(int argc, char* argv[])
 {
@@ -57,6 +61,7 @@ int main(int argc, char* argv[])
 		window_initialisation();
 		initiate_reading_printing(argv[1]);
 		mode_handling();
+		delwin(main_window);
 		endwin();
 	}
 
@@ -68,15 +73,18 @@ void window_initialisation()
 	initscr();
 	noecho();
 	cbreak();
-	getyx(stdscr, main_window_y, main_window_x);
+
+	getmaxyx(stdscr, main_window_y, main_window_x);
 	main_window = newwin(main_window_y, main_window_x, 0, 0);
+
 	if (main_window == NULL)
 	{
 		endwin();
 		printf("There was an error initialising the window. Try to execute it again\n");
 	}
-	refresh();
-	box(main_window, main_window_y, main_window_x);
+
+	box(main_window, 0, 0);
+	wrefresh(stdscr);
 }
 
 void initiate_reading_printing(char *file_name)
@@ -86,12 +94,7 @@ void initiate_reading_printing(char *file_name)
 	{
 		printf("Error opening the %s, could be that the file doesnt exist\n", file_name);
 	}
-	char buffer_for_text[200];
-	int line = 0, row = 0;
-	while (fgets(buffer_for_text, sizeof(buffer_for_text), file))
-	{
-		mvwprintw(main_window, line++, row, "%s", buffer_for_text);
-	}
+
 
 	wrefresh(main_window);
 }
@@ -100,8 +103,11 @@ void mode_handling()
 {
 	int editor_is_active = 1;
 	int key_pressed;
-	int cursor_y, cursor_x;
-	getyx(stdscr, cursor_y, cursor_x);
+	int cursor_y = 1, cursor_x = 1;
+
+	wmove(main_window, cursor_y, cursor_x);
+	wrefresh(main_window);
+
 	while (editor_is_active == 1)
 	{
 		normal_mode(key_pressed, cursor_y, cursor_x);
@@ -117,29 +123,45 @@ void normal_mode(int key_pressed, int cursor_y, int cursor_x)
 		{
 			case j_KEY:
 
-			cursor_y++;
-			move(cursor_y, cursor_x);
+			if (cursor_y < main_window_y - 2)
+			{
+				cursor_y++;
+				wmove(main_window, cursor_y, cursor_x);
+				wrefresh(main_window);
+			}
 
 			break;
 
 			case k_KEY:
-
-			cursor_y--;
-			move(cursor_y, cursor_x);
+			
+			if (cursor_y > 1)
+			{
+				cursor_y--;
+				wmove(main_window, cursor_y, cursor_x);
+				wrefresh(main_window);
+			}
 
 			break;
 
 			case l_KEY:
 
-			cursor_x++;
-			move(cursor_y, cursor_x);
+			if (cursor_x < main_window_x - 2)
+			{
+				cursor_x++;
+				wmove(main_window, cursor_y, cursor_x);
+				wrefresh(main_window);
+			}
 
 			break;
 
 			case h_KEY:
 
-			cursor_x--;
-			move(cursor_y, cursor_x);
+			if (cursor_x > 1)
+			{
+				cursor_x--;
+				wmove(main_window, cursor_y, cursor_x);
+				wrefresh(main_window);
+			}
 
 			break;
 		}
