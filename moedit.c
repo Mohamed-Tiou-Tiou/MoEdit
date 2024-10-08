@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <ncurses.h>
 
-
 #define ESC_KEY 27
 #define COLON_KEY 58
 #define i_KEY 105
@@ -11,7 +10,7 @@
 #define l_KEY 108
 #define h_KEY 104
 
-void window_initialisation();
+void windows_handling();
 void initiate_reading_printing(char *file_name);
 void mode_handling();
 void normal_mode(int key_pressed, int cursor_y, int cursor_x);
@@ -44,9 +43,16 @@ struct Node *create_node(char new_character)
 	return new_node;
 }
 
+int rows;
+int coloms;
 WINDOW* main_window;
-int main_window_y = 0;
-int main_window_x = 0;
+int main_window_y;
+int main_window_x;
+WINDOW* explorer_window;
+
+WINDOW* status_window;
+int status_window_y;
+int status_window_x;
 
 int main(int argc, char* argv[])
 {
@@ -58,7 +64,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		window_initialisation();
+		windows_handling();
 		initiate_reading_printing(argv[1]);
 		mode_handling();
 		delwin(main_window);
@@ -68,25 +74,45 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-void window_initialisation()
+void windows_handling()
 {
 	initscr();
 	noecho();
 	cbreak();
 
-	getmaxyx(stdscr, main_window_y, main_window_x);
-	main_window = newwin(main_window_y, main_window_x, 0, 0);
+	rows = 0;
+	coloms = 0;
+	
+	getmaxyx(stdscr, rows, coloms);
 
+	main_window_y = rows - 3;
+	main_window_x = coloms;
+	status_window_y = 3;
+	status_window_x = coloms;
+
+	main_window = newwin(main_window_y, main_window_x, 0, 0);
+	status_window = newwin(status_window_y, status_window_x, rows - 3, 0);
+	
+	if (status_window == NULL)
+	{
+		endwin();
+		printf("There was an error initialising the status window. Try to execute it again\n");
+	}
 	if (main_window == NULL)
 	{
 		endwin();
-		printf("There was an error initialising the window. Try to execute it again\n");
+		printf("There was an error initialising the main window. Try to execute it again\n");
 	}
 
 	box(main_window, 0, 0);
 	wrefresh(stdscr);
+	wrefresh(main_window);
+	mvwprintw(main_window, 0, 1, " Main Window ");
+	box(status_window, 0, 0);
+    mvwprintw(status_window, 0, 1, " Status Window ");
+	wrefresh(stdscr);
+	wrefresh(status_window);
 }
-
 void initiate_reading_printing(char *file_name)
 {
 	FILE *file = fopen(file_name, "r");
