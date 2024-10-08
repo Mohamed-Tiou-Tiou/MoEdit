@@ -11,6 +11,9 @@
 #define h_KEY 104
 
 void windows_handling();
+void draw_main_window();
+void draw_explorer_window();
+void draw_status_window();
 void initiate_reading_printing(char *file_name);
 void mode_handling();
 void normal_mode(int key_pressed, int cursor_y, int cursor_x);
@@ -92,46 +95,64 @@ void windows_handling()
 	coloms = 0;
 	
 	getmaxyx(stdscr, rows, coloms);
+	
+	draw_explorer_window();
+	draw_main_window();
+	draw_status_window();
 
+}
+
+void draw_main_window()
+{
 	main_window_y = rows - 3;
 	main_window_x = coloms - (coloms / 5);
-	status_window_y = 3;
-	status_window_x = coloms;
-	explorer_window_y = rows - 3;
-	explorer_window_x = coloms / 5;
-
 	main_window = newwin(main_window_y, main_window_x, 0, coloms / 5);
-	status_window = newwin(status_window_y, status_window_x, rows - 3, 0);
-	explorer_window = newwin(explorer_window_y, explorer_window_x, 0, 0);
-
 	if (main_window == NULL)
 	{
 		endwin();
 		printf("There was an error initialising the main window. Try to execute it again\n");
 	}
-	if (status_window == NULL)
-	{
-		endwin();
-		printf("There was an error initialising the status window. Try to execute it again\n");
-	}
+	box(main_window, 0, 0);
+	wrefresh(stdscr);
+	wrefresh(main_window);
+	mvwprintw(main_window, 0, 1, " Main Window ");
+
+}
+
+void draw_explorer_window()
+{
+	explorer_window_y = rows - 3;
+	explorer_window_x = coloms / 5;
+
+	explorer_window = newwin(explorer_window_y, explorer_window_x, 0, 0);
+
 	if (explorer_window == NULL)
 	{
 		endwin();
 		printf("There was an error initialising the explorer window. Try to execute it again\n");
 	}
 
-	box(main_window, 0, 0);
-	wrefresh(stdscr);
-	wrefresh(main_window);
-	mvwprintw(main_window, 0, 1, " Main Window ");
-	box(status_window, 0, 0);
-    mvwprintw(status_window, 0, 1, " Status Window ");
-	wrefresh(stdscr);
-	wrefresh(status_window);
 	box(explorer_window, 0, 0);
     mvwprintw(explorer_window, 0, 1, " Explorer Window ");
 	wrefresh(stdscr);
 	wrefresh(explorer_window);
+
+}
+
+void draw_status_window()
+{
+	status_window_y = 3;
+	status_window_x = coloms;
+	status_window = newwin(status_window_y, status_window_x, rows - 3, 0);
+	if (status_window == NULL)
+	{
+		endwin();
+		printf("There was an error initialising the status window. Try to execute it again\n");
+	}
+	box(status_window, 0, 0);
+    mvwprintw(status_window, 0, 1, " Status Window ");
+	wrefresh(stdscr);
+	wrefresh(status_window);
 
 }
 void initiate_reading_printing(char *file_name)
