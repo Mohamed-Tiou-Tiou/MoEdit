@@ -45,10 +45,18 @@ struct Node *create_node(char new_character)
 
 int rows;
 int coloms;
+
 WINDOW* main_window;
 int main_window_y;
 int main_window_x;
+
 WINDOW* explorer_window;
+int explorer_window_y;
+int explorer_window_x;
+
+WINDOW* description_window;
+int description_window_y;
+int description_window_x;
 
 WINDOW* status_window;
 int status_window_y;
@@ -86,22 +94,30 @@ void windows_handling()
 	getmaxyx(stdscr, rows, coloms);
 
 	main_window_y = rows - 3;
-	main_window_x = coloms;
+	main_window_x = coloms - (coloms / 5);
 	status_window_y = 3;
 	status_window_x = coloms;
+	explorer_window_y = rows - 3;
+	explorer_window_x = coloms / 5;
 
-	main_window = newwin(main_window_y, main_window_x, 0, 0);
+	main_window = newwin(main_window_y, main_window_x, 0, coloms / 5);
 	status_window = newwin(status_window_y, status_window_x, rows - 3, 0);
-	
+	explorer_window = newwin(explorer_window_y, explorer_window_x, 0, 0);
+
+	if (main_window == NULL)
+	{
+		endwin();
+		printf("There was an error initialising the main window. Try to execute it again\n");
+	}
 	if (status_window == NULL)
 	{
 		endwin();
 		printf("There was an error initialising the status window. Try to execute it again\n");
 	}
-	if (main_window == NULL)
+	if (explorer_window == NULL)
 	{
 		endwin();
-		printf("There was an error initialising the main window. Try to execute it again\n");
+		printf("There was an error initialising the explorer window. Try to execute it again\n");
 	}
 
 	box(main_window, 0, 0);
@@ -112,6 +128,11 @@ void windows_handling()
     mvwprintw(status_window, 0, 1, " Status Window ");
 	wrefresh(stdscr);
 	wrefresh(status_window);
+	box(explorer_window, 0, 0);
+    mvwprintw(explorer_window, 0, 1, " Explorer Window ");
+	wrefresh(stdscr);
+	wrefresh(explorer_window);
+
 }
 void initiate_reading_printing(char *file_name)
 {
