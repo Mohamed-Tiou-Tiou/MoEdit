@@ -13,6 +13,7 @@
 void windows_handling();
 void draw_main_window();
 void draw_explorer_window();
+void draw_description_window();
 void draw_status_window();
 void draw_command_window();
 void initiate_reading_printing(char * file_name);
@@ -110,6 +111,7 @@ void windows_handling()
 	getmaxyx(stdscr, rows, coloms);
 	
 	draw_explorer_window();
+	draw_description_window();
 	draw_main_window();
 	draw_status_window();
 	draw_command_window();
@@ -135,7 +137,7 @@ void draw_main_window()
 
 void draw_explorer_window()
 {
-	explorer_window_y = rows - 3;
+	explorer_window_y = (rows - 3) / 2;
 	explorer_window_x = coloms / 5;
 
 	explorer_window = newwin(explorer_window_y, explorer_window_x, 0, 0);
@@ -151,6 +153,25 @@ void draw_explorer_window()
 	wrefresh(stdscr);
 	wrefresh(explorer_window);
 
+}
+
+void draw_description_window()
+{
+	description_window_y = (rows - 3) / 2;
+	description_window_x = coloms / 5;
+
+	description_window = newwin(description_window_y, description_window_x, (rows / 2) - 4, 0);
+
+	if (description_window == NULL)
+	{
+		endwin();
+		printf("There was an error initialising the description window. Try to execute it again\n");
+	}
+
+	box(description_window, 0, 0);
+    mvwprintw(description_window, 0, 1, " Description Window ");
+	wrefresh(stdscr);
+	wrefresh(description_window);
 }
 
 void draw_status_window()
@@ -185,6 +206,7 @@ void draw_command_window()
 	wrefresh(stdscr);
 	wrefresh(command_window);
 }
+
 void initiate_reading_printing(char * file_name)
 {
 	FILE * file = fopen(file_name, "r");
@@ -282,7 +304,17 @@ void normal_mode(int cursor_y, int cursor_x, int normal_mode_is_active, int inse
 
 void insert_mode(int normal_mode_is_active, int insert_mode_is_active, int command_mode_is_active, int explorer_mode_is_active)
 {
-	check_what_mode_im_in(normal_mode_is_active, insert_mode_is_active, command_mode_is_active, explorer_mode_is_active);
+	if (key_pressed == i_KEY)
+	{
+		while ((key_pressed = getch()) != ESC_KEY)
+		{
+			for (int i = 0; 0 <= 1; i++)
+			{
+				insert_mode_is_active = 1;
+				check_what_mode_im_in(normal_mode_is_active, insert_mode_is_active, command_mode_is_active, explorer_mode_is_active);
+			}
+		}
+	}
 }
 
 void command_mode(int normal_mode_is_active, int insert_mode_is_active, int command_mode_is_active, int explorer_mode_is_active)
