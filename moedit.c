@@ -18,11 +18,11 @@ void draw_status_window();
 void draw_command_window();
 void initiate_reading_printing(char * file_name);
 void mode_handling();
-void normal_mode(int cursor_y, int cursor_x, int normal_mode_is_active, int insert_mode_is_active, int command_mode_is_active, int explorer_mode_is_active);
-void insert_mode(int normal_mode_is_active, int insert_mode_is_active, int command_mode_is_active, int explorer_mode_is_active);
-void command_mode(int normal_mode_is_active, int insert_mode_is_active, int command_mode_is_active, int explorer_mode_is_active);
+void normal_mode();
+void insert_mode();
+void command_mode();
 void command_mode_parser(char * command_input);
-void check_what_mode_im_in(int normal_mode_is_active, int insert_mode_is_active, int command_mode_is_active, int explorer_mode_is_active);
+void check_what_mode_im_in();
 
 typedef struct node
 {
@@ -50,6 +50,14 @@ node * create_node(char new_character)
 	return new_node;
 }
 
+int cursor_y = 1;
+int cursor_x = 1;
+
+	int editor_is_active = 1;
+	int normal_mode_is_active = 1;
+	int insert_mode_is_active = 0;
+	int command_mode_is_active = 0;
+	int explorer_mode_is_active = 0;
 int key_pressed;
 
 int rows;
@@ -137,7 +145,7 @@ void draw_main_window()
 
 void draw_explorer_window()
 {
-	explorer_window_y = (rows - 3) / 2;
+	explorer_window_y = ((rows - 3) / 2) + 1;
 	explorer_window_x = coloms / 5;
 
 	explorer_window = newwin(explorer_window_y, explorer_window_x, 0, 0);
@@ -160,7 +168,7 @@ void draw_description_window()
 	description_window_y = (rows - 3) / 2;
 	description_window_x = coloms / 5;
 
-	description_window = newwin(description_window_y, description_window_x, (rows / 2) - 4, 0);
+	description_window = newwin(description_window_y, description_window_x, (rows / 2) - 1, 0);
 
 	if (description_window == NULL)
 	{
@@ -221,112 +229,134 @@ void initiate_reading_printing(char * file_name)
 
 void mode_handling()
 {
-	int editor_is_active = 1;
-	int normal_mode_is_active = 1;
-	int insert_mode_is_active = 0;
-	int command_mode_is_active = 0;
-	int explorer_mode_is_active = 0;
-	int cursor_y = 1, cursor_x = 1;
 
 	wmove(main_window, cursor_y, cursor_x);
 	wrefresh(main_window);
 
 	while (editor_is_active == 1)
 	{
-		normal_mode(cursor_y, cursor_x, normal_mode_is_active, insert_mode_is_active, command_mode_is_active, explorer_mode_is_active);
-		insert_mode(normal_mode_is_active, insert_mode_is_active, command_mode_is_active, explorer_mode_is_active);
-		command_mode(normal_mode_is_active, insert_mode_is_active, command_mode_is_active, explorer_mode_is_active);
+		normal_mode();
+		insert_mode();
+		command_mode();
 	}
 }
 
-void normal_mode(int cursor_y, int cursor_x, int normal_mode_is_active, int insert_mode_is_active, int command_mode_is_active, int explorer_mode_is_active)
+void normal_mode()
 {
-	check_what_mode_im_in(normal_mode_is_active, insert_mode_is_active, command_mode_is_active, explorer_mode_is_active);
+	if (normal_mode_is_active == 1)
+	{
+		check_what_mode_im_in();
+	}
 
 	while (normal_mode_is_active == 1)
 	{
-		if (key_pressed != i_KEY || key_pressed != COLON_KEY)
+		switch (key_pressed = getch())
 		{
-			switch (key_pressed = getch())
-			{
-				case j_KEY:
+			case j_KEY:
 
-					if (cursor_y < main_window_y - 2)
-					{
-						cursor_y++;
-						wmove(main_window, cursor_y, cursor_x);
-						wrefresh(main_window);
-					}
+				if (cursor_y < main_window_y - 2)
+				{
+					cursor_y++;
+					wmove(main_window, cursor_y, cursor_x);
+					wrefresh(main_window);
+				}
 
-				break;
+			break;
 
-				case k_KEY:
-				
-					if (cursor_y > 1)
-					{
-						cursor_y--;
-						wmove(main_window, cursor_y, cursor_x);
-						wrefresh(main_window);
-					}
+			case k_KEY:
+			
+				if (cursor_y > 1)
+				{
+					cursor_y--;
+					wmove(main_window, cursor_y, cursor_x);
+					wrefresh(main_window);
+				}
 
-				break;
+			break;
 
-				case l_KEY:
+			case l_KEY:
 
-					if (cursor_x < main_window_x - 2)
-					{
-						cursor_x++;
-						wmove(main_window, cursor_y, cursor_x);
-						wrefresh(main_window);
-					}
+				if (cursor_x < main_window_x - 2)
+				{
+					cursor_x++;
+					wmove(main_window, cursor_y, cursor_x);
+					wrefresh(main_window);
+				}
 
-				break;
+			break;
 
-				case h_KEY:
+			case h_KEY:
 
-					if (cursor_x > 1)
-					{
-						cursor_x--;
-						wmove(main_window, cursor_y, cursor_x);
-						wrefresh(main_window);
-					}
+				if (cursor_x > 1)
+				{
+					cursor_x--;
+					wmove(main_window, cursor_y, cursor_x);
+					wrefresh(main_window);
+				}
 
-				break;
-			}
-		}
+			break;
 
-		else
-		{
-			normal_mode_is_active = 0;
-		}
-	}
-}
+			case i_KEY:
 
-void insert_mode(int normal_mode_is_active, int insert_mode_is_active, int command_mode_is_active, int explorer_mode_is_active)
-{
-	if (key_pressed == i_KEY)
-	{
-		while ((key_pressed = getch()) != ESC_KEY)
-		{
-			for (int i = 0; 0 <= 1; i++)
-			{
+				normal_mode_is_active = 0;
 				insert_mode_is_active = 1;
-				check_what_mode_im_in(normal_mode_is_active, insert_mode_is_active, command_mode_is_active, explorer_mode_is_active);
-			}
+				command_mode_is_active = 0;
+
+			break;
+
+			case COLON_KEY:
+
+				normal_mode_is_active = 0;
+				insert_mode_is_active = 0;
+				command_mode_is_active = 1;
+
+			break;
 		}
 	}
 }
 
-void command_mode(int normal_mode_is_active, int insert_mode_is_active, int command_mode_is_active, int explorer_mode_is_active)
+void insert_mode()
 {
-	check_what_mode_im_in(normal_mode_is_active, insert_mode_is_active, command_mode_is_active, explorer_mode_is_active);
+	if (insert_mode_is_active == 1)
+	{
+		check_what_mode_im_in();
+	}	
 
-	if (key_pressed == COLON_KEY)
+	while (insert_mode_is_active == 1)
+	{
+		switch (key_pressed = getch())
+		{
+			case ESC_KEY:
+			
+				normal_mode_is_active = 1;
+				insert_mode_is_active = 0;
+				command_mode_is_active = 0;
+
+			break;
+		}
+	}
+}
+
+void command_mode()
+{
+	if (command_mode_is_active == 1)
+	{
+		check_what_mode_im_in();
+	}
+	else
+	{
+		normal_mode_is_active = 1;
+	}
+
+	while (command_mode_is_active == 1)
 	{
 		char buffer_for_command[10];
-		fgets(buffer_for_command, sizeof(buffer_for_command), stdin); 
+		fgets(buffer_for_command, sizeof(buffer_for_command), stdin);
 		command_mode_parser(buffer_for_command);
+		command_mode_is_active = 0;
+		normal_mode_is_active = 1;
 	}
+	
 }
 
 void command_mode_parser(char *command_input)
@@ -334,30 +364,34 @@ void command_mode_parser(char *command_input)
 
 }
 
-void check_what_mode_im_in(int normal_mode_is_active, int insert_mode_is_active, int command_mode_is_active, int explorer_mode_is_active)
+void check_what_mode_im_in()
 {
 	if (normal_mode_is_active == 1)
 	{
 		mvwprintw(status_window, 1, 1, " NORMAL MODE IS ACTIVE ");
-		wrefresh(stdscr);
+		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(status_window);
+		wrefresh(main_window);
 	}
 	else if (insert_mode_is_active == 1)
 	{
 		mvwprintw(status_window, 1, 1, " INSERT MODE IS ACTIVE ");
-		wrefresh(stdscr);
+		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(status_window);
+		wrefresh(main_window);
 	}
 	else if (command_mode_is_active == 1)
 	{
 		mvwprintw(status_window, 1, 1, " COMMAND MODE IS ACTIVE ");
-		wrefresh(stdscr);
+		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(status_window);
+		wrefresh(main_window);
 	}
 	else if (explorer_mode_is_active == 1)
 	{
 		mvwprintw(status_window, 1, 1, " EXPLORER MODE IS ACTIVE ");
-		wrefresh(stdscr);
+		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(status_window);
+		wrefresh(main_window);
 	}
 }
