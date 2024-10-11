@@ -4,6 +4,7 @@
 
 #define ESC_KEY 27
 #define COLON_KEY 58
+#define ENTER_KEY 10
 #define i_KEY 105
 #define j_KEY 106
 #define k_KEY 107
@@ -16,7 +17,7 @@ void draw_explorer_window();
 void draw_description_window();
 void draw_status_window();
 void draw_command_window();
-void initiate_reading_printing(char * file_name);
+//void initiate_reading_printing(char * file_name);
 void mode_handling();
 void normal_mode();
 void insert_mode();
@@ -53,11 +54,12 @@ node * create_node(char new_character)
 int cursor_y = 1;
 int cursor_x = 1;
 
-	int editor_is_active = 1;
-	int normal_mode_is_active = 1;
-	int insert_mode_is_active = 0;
-	int command_mode_is_active = 0;
-	int explorer_mode_is_active = 0;
+int editor_is_active = 1;
+int normal_mode_is_active = 1;
+int insert_mode_is_active = 0;
+int command_mode_is_active = 0;
+int explorer_mode_is_active = 0;
+
 int key_pressed;
 
 int rows;
@@ -93,12 +95,11 @@ int main(int argc, char * argv[])
 	{
 		printf("You cant enter more than 1 argument, so do ./editor filename.txt\n");
 		printf("You entered %d arguments\n", argc);
-		endwin();
 	}
 	else
 	{
 		windows_handling();
-		initiate_reading_printing(argv[1]);
+		//initiate_reading_printing(argv[1]);
 		mode_handling();
 		delwin(main_window);
 		endwin();
@@ -145,7 +146,7 @@ void draw_main_window()
 
 void draw_explorer_window()
 {
-	explorer_window_y = ((rows - 3) / 2) + 1;
+	explorer_window_y = (rows - 3) / 2 + 1;
 	explorer_window_x = coloms / 5;
 
 	explorer_window = newwin(explorer_window_y, explorer_window_x, 0, 0);
@@ -165,10 +166,10 @@ void draw_explorer_window()
 
 void draw_description_window()
 {
-	description_window_y = (rows - 3) / 2;
+	description_window_y = (rows - 3) / 2 - 1;
 	description_window_x = coloms / 5;
 
-	description_window = newwin(description_window_y, description_window_x, (rows / 2) - 1, 0);
+	description_window = newwin(description_window_y, description_window_x, (rows - 3)  - (rows - 3) / 2 + 1, 0);
 
 	if (description_window == NULL)
 	{
@@ -215,7 +216,7 @@ void draw_command_window()
 	wrefresh(command_window);
 }
 
-void initiate_reading_printing(char * file_name)
+/*void initiate_reading_printing(char * file_name)
 {
 	FILE * file = fopen(file_name, "r");
 	if (file == NULL)
@@ -225,14 +226,12 @@ void initiate_reading_printing(char * file_name)
 
 
 	wrefresh(main_window);
-}
+}*/
 
 void mode_handling()
 {
-
 	wmove(main_window, cursor_y, cursor_x);
 	wrefresh(main_window);
-
 	while (editor_is_active == 1)
 	{
 		normal_mode();
@@ -333,6 +332,26 @@ void insert_mode()
 				command_mode_is_active = 0;
 
 			break;
+
+			case ENTER_KEY:
+
+				cursor_y++;
+				cursor_x = 1;
+				wmove(main_window, cursor_y, cursor_x);
+				wrefresh(main_window);
+
+			break;
+
+			default:
+
+				if (cursor_x > main_window_x - 2)
+				{
+					cursor_y++;
+					cursor_x = 1;
+				}
+				mvwprintw(main_window, cursor_y, cursor_x, "%c", key_pressed);
+				wrefresh(main_window);
+				cursor_x++;
 		}
 	}
 }
@@ -369,28 +388,24 @@ void check_what_mode_im_in()
 	if (normal_mode_is_active == 1)
 	{
 		mvwprintw(status_window, 1, 1, " NORMAL MODE IS ACTIVE ");
-		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(status_window);
 		wrefresh(main_window);
 	}
 	else if (insert_mode_is_active == 1)
 	{
 		mvwprintw(status_window, 1, 1, " INSERT MODE IS ACTIVE ");
-		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(status_window);
 		wrefresh(main_window);
 	}
 	else if (command_mode_is_active == 1)
 	{
 		mvwprintw(status_window, 1, 1, " COMMAND MODE IS ACTIVE ");
-		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(status_window);
 		wrefresh(main_window);
 	}
 	else if (explorer_mode_is_active == 1)
 	{
 		mvwprintw(status_window, 1, 1, " EXPLORER MODE IS ACTIVE ");
-		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(status_window);
 		wrefresh(main_window);
 	}
