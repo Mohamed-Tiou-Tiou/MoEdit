@@ -5,6 +5,8 @@
 #define ESC_KEY 27
 #define COLON_KEY 58
 #define ENTER_KEY 10
+#define BACK_SPACE_KEY 127
+#define p_KEY 112
 #define i_KEY 105
 #define j_KEY 106
 #define k_KEY 107
@@ -21,35 +23,13 @@ void draw_command_window();
 void mode_handling();
 void normal_mode();
 void insert_mode();
+void insert_characters_linkedlist();
+void delete_one_character();
+void print_refresh_list();
 void command_mode();
 void command_mode_parser(char * command_input);
 void check_what_mode_im_in();
-
-typedef struct node
-{
-	char character;
-
-	struct node * prev;
-	struct node * next;
-
-}node;
-
-node * create_node(char new_character)
-{
-	node * new_node = (node * )malloc(sizeof(node));
-
-	if (new_node == NULL)
-	{
-		printf("Memory allocation of the new node failed!\n");
-		endwin();
-	}
-
-	new_node->character = new_character;
-	new_node->prev = NULL;
-	new_node->next = NULL;
-
-	return new_node;
-}
+void check_if_cursor_at_border_insert_mode();
 
 int cursor_y = 1;
 int cursor_x = 1;
@@ -60,6 +40,7 @@ int insert_mode_is_active = 0;
 int command_mode_is_active = 0;
 int explorer_mode_is_active = 0;
 
+int itteration = 0;
 int key_pressed;
 
 int rows;
@@ -88,6 +69,37 @@ int command_window_x;
 WINDOW * warning_window;
 int warning_window_y;
 int warning_window_x;
+
+typedef struct node
+{
+	char character;
+
+	struct node * prev;
+	struct node * next;
+
+}node;
+
+node * head = NULL;
+node * tail = NULL; 
+node * new_node = NULL;
+
+node * create_node(int new_character_ascii)
+{
+	node * new_node = (node * )malloc(sizeof(node));
+
+	if (new_node == NULL)
+	{
+		printf("Memory allocation of the new node failed!\n");
+		endwin();
+	}
+
+	new_node->character = (char)new_character_ascii;
+	new_node->prev = NULL;
+	new_node->next = NULL;
+
+	return new_node;
+}
+
 
 int main(int argc, char * argv[])
 {
@@ -229,7 +241,7 @@ void draw_command_window()
 }*/
 
 void mode_handling()
-{
+{ 
 	wmove(main_window, cursor_y, cursor_x);
 	wrefresh(main_window);
 	while (editor_is_active == 1)
@@ -310,6 +322,12 @@ void normal_mode()
 				command_mode_is_active = 1;
 
 			break;
+			
+			case p_KEY:
+				
+				print_refresh_list();
+
+			break;
 		}
 	}
 }
@@ -342,17 +360,75 @@ void insert_mode()
 
 			break;
 
+			case BACK_SPACE_KEY: //delete key
+
+				delete_one_character();
+				
+			break;
+
 			default:
 
-				if (cursor_x > main_window_x - 2)
-				{
-					cursor_y++;
-					cursor_x = 1;
-				}
-				mvwprintw(main_window, cursor_y, cursor_x, "%c", key_pressed);
-				wrefresh(main_window);
-				cursor_x++;
+				insert_characters_linkedlist();
 		}
+	}
+}
+
+
+void insert_characters_linkedlist()
+{
+	new_node = create_node(key_pressed);
+
+	if (head == NULL)
+	{
+		head = new_node;
+		tail = new_node;
+		
+		head->prev = NULL;
+		head->next = NULL;
+	}
+	else
+	{
+		if (head->next == NULL || tail->prev == NULL)
+		{
+			head->next = new_node;
+			tail->prev = new_node;	
+		}
+
+		tail->next = new_node;
+
+		new_node->prev = tail;
+
+		tail = new_node;
+	}
+}
+
+void delete_one_character()
+{
+	if (tail->prev != NULL)
+	{
+		node * temp = tail;
+		tail = tail->prev;
+		tail->next = NULL;
+		free(temp);
+	}
+	else if (head->next == new_node && tail->prev == new_node)
+	{
+		head->next = NULL;
+		tail->prev = NULL;
+		tail->next = NULL;
+	}
+}
+
+void print_refresh_list()
+{
+	node * current_node = head;
+	while(current_node != NULL)
+	{
+		check_if_cursor_at_border_insert_mode();
+		mvwprintw(main_window, cursor_y, cursor_x, "%c", current_node->character);
+		wrefresh(main_window);
+		current_node = current_node->next;
+		cursor_x++;
 	}
 }
 
@@ -408,5 +484,14 @@ void check_what_mode_im_in()
 		mvwprintw(status_window, 1, 1, " EXPLORER MODE IS ACTIVE ");
 		wrefresh(status_window);
 		wrefresh(main_window);
+	}
+}
+
+void check_if_cursor_at_border_insert_mode()
+{
+	if (cursor_x > main_window_x - 2)
+	{
+		cursor_y++;
+		cursor_x = 1;
 	}
 }
