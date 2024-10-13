@@ -114,6 +114,10 @@ int main(int argc, char * argv[])
 		//initiate_reading_printing(argv[1]);
 		mode_handling();
 		delwin(main_window);
+		delwin(status_window);
+		delwin(command_window);
+		delwin(description_window);
+		delwin(explorer_window);
 		endwin();
 	}
 
@@ -395,26 +399,32 @@ void insert_characters_linkedlist()
 		}
 
 		tail->next = new_node;
-
 		new_node->prev = tail;
-
 		tail = new_node;
 	}
 }
 
 void delete_one_character()
 {
-	if (tail->prev != NULL)
+	if (head == tail)
 	{
-		node * temp = tail;
-		tail = tail->prev;
-		tail->next = NULL;
-		free(temp);
+		head = NULL;
+		tail = NULL;
 	}
-	else if (head->next == new_node && tail->prev == new_node)
+	else if (head->next != tail->prev)
 	{
-		head->next = NULL;
-		tail->prev = NULL;
+		node * temp_node = tail;
+		tail = tail->prev;
+		free(temp_node);
+		temp_node = NULL;
+		tail->next = NULL;
+	}
+	else if (head->next == tail->prev)
+	{
+		node * temp_node = tail;
+		tail = tail->prev;
+		free(temp_node);
+		temp_node = NULL;
 		tail->next = NULL;
 	}
 }
@@ -430,6 +440,9 @@ void print_refresh_list()
 		current_node = current_node->next;
 		cursor_x++;
 	}
+
+	free(current_node);
+	current_node = NULL;
 }
 
 void command_mode()
