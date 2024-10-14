@@ -25,9 +25,10 @@ void normal_mode();
 void insert_mode();
 void insert_characters_linkedlist();
 void delete_one_character();
+void print_character();
 void print_refresh_list();
 void command_mode();
-void command_mode_parser(char * command_input);
+void command_mode_parser(char * command_input, int itteration);
 void check_what_mode_im_in();
 void check_if_cursor_at_border_insert_mode();
 
@@ -40,7 +41,6 @@ int insert_mode_is_active = 0;
 int command_mode_is_active = 0;
 int explorer_mode_is_active = 0;
 
-int itteration = 0;
 int key_pressed;
 
 int rows;
@@ -228,6 +228,7 @@ void draw_command_window()
 	}
 	box(command_window, 0, 0);
     mvwprintw(command_window, 0, 1, " Command Window ");
+    mvwprintw(command_window, 1, 1, ":");
 	wrefresh(stdscr);
 	wrefresh(command_window);
 }
@@ -429,6 +430,11 @@ void delete_one_character()
 	}
 }
 
+void print_character()
+{
+
+}
+
 void print_refresh_list()
 {
 	node * current_node = head;
@@ -459,17 +465,75 @@ void command_mode()
 	while (command_mode_is_active == 1)
 	{
 		char buffer_for_command[10];
-		fgets(buffer_for_command, sizeof(buffer_for_command), stdin);
-		command_mode_parser(buffer_for_command);
+		int itteration = 0;
+		int itteration_x = 2;
+		wmove(command_window, 1, 2);
+		wrefresh(command_window);
+		while ((key_pressed = getch()) != ENTER_KEY)
+		{
+			if (itteration < 10)
+			{
+				if (key_pressed != BACK_SPACE_KEY)
+				{
+					buffer_for_command[itteration] = (char)key_pressed;
+					mvwprintw(command_window, 1, itteration_x, "%c", buffer_for_command[itteration]);
+					wrefresh(command_window);
+					itteration++;
+					itteration_x++;
+				}
+				else if (key_pressed == BACK_SPACE_KEY)
+				{
+					itteration--;
+					itteration_x--;
+					buffer_for_command[itteration] = ' ';
+					wmove(command_window, 1, itteration_x);
+					int temp_x = 2;
+					for (int j = 0; j <= itteration; j++)
+					{
+						mvwprintw(command_window, 1, temp_x, "%c", buffer_for_command[j]);
+						temp_x++;
+					}
+					wmove(command_window, 1, itteration_x);
+					wrefresh(command_window);
+					if (key_pressed != BACK_SPACE_KEY)
+					{
+						itteration_x++;
+						key_pressed = getch();
+						mvwprintw(command_window, 1, itteration_x, "%c", key_pressed);
+						wrefresh(command_window);
+						itteration++;
+					}
+				}
+			}
+		}
+		wclear(command_window);
+		draw_command_window();
+		wrefresh(command_window);
+		command_mode_parser(buffer_for_command, itteration);
 		command_mode_is_active = 0;
 		normal_mode_is_active = 1;
+		wmove(main_window, cursor_y, cursor_x);
+		itteration = 1;
+		itteration_x = 1;
 	}
 	
 }
 
-void command_mode_parser(char *command_input)
+void command_mode_parser(char *command_input, int itteration)
 {
+	for (int i = 0; i <= itteration; i++)
+	{
+		switch (command_input[i])
+		{
+			case 'w':
 
+			break;
+
+			case 'q':
+
+			break;
+		}
+	}
 }
 
 void check_what_mode_im_in()
