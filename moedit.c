@@ -13,24 +13,28 @@
 #define l_KEY 108
 #define h_KEY 104
 
+void file_handling(char * file_name);
+void open_file(char * file_name);
+void get_characters(FILE * file);
 void windows_handling();
+void clean_all_windows();
 void draw_main_window();
 void draw_explorer_window();
 void draw_description_window();
 void draw_status_window();
 void draw_command_window();
-//void initiate_reading_printing(char * file_name);
 void mode_handling();
 void normal_mode();
 void insert_mode();
-void insert_characters_linkedlist();
+void insert_characters_linkedlist(int data);
 void delete_one_character();
-void print_character();
-void print_refresh_list();
+void print_characters();
 void command_mode();
 void command_mode_parser(char * command_input, int itteration);
 void check_what_mode_im_in();
 void check_if_cursor_at_border_insert_mode();
+
+FILE * current_file = NULL;
 
 int cursor_y = 1;
 int cursor_x = 1;
@@ -111,17 +115,41 @@ int main(int argc, char * argv[])
 	else
 	{
 		windows_handling();
-		//initiate_reading_printing(argv[1]);
+		file_handling(argv[1]);
 		mode_handling();
-		delwin(main_window);
-		delwin(status_window);
-		delwin(command_window);
-		delwin(description_window);
-		delwin(explorer_window);
-		endwin();
+		clean_all_windows();
 	}
 
 	return 0;
+}
+
+void file_handling(char * file_name)
+{
+	open_file(file_name);
+	if (current_file != NULL)
+	{
+		get_characters(current_file);
+		print_characters();
+	}
+}
+
+void open_file(char * file_name)
+{
+	current_file = fopen(file_name, "r");
+	if (current_file == NULL)
+	{
+		printf("There were problems trying to open the file\n");
+	}
+}
+
+void get_characters(FILE * file)
+{
+	int buffer;
+	while ((buffer = fgetc(file)) != EOF)
+	{
+		insert_characters_linkedlist(buffer);
+	}
+	delete_one_character();  //just a quick fix before i dig in why the output skips a space
 }
 
 void windows_handling()
@@ -141,6 +169,16 @@ void windows_handling()
 	draw_status_window();
 	draw_command_window();
 
+}
+
+void clean_all_windows()
+{
+	delwin(main_window);
+	delwin(status_window);
+	delwin(command_window);
+	delwin(description_window);
+	delwin(explorer_window);
+	endwin();
 }
 
 void draw_main_window()
@@ -233,17 +271,6 @@ void draw_command_window()
 	wrefresh(command_window);
 }
 
-/*void initiate_reading_printing(char * file_name)
-{
-	FILE * file = fopen(file_name, "r");
-	if (file == NULL)
-	{
-		printf("Error opening the %s, could be that the file doesnt exist\n", file_name);
-	}
-
-
-	wrefresh(main_window);
-}*/
 
 void mode_handling()
 { 
@@ -330,7 +357,7 @@ void normal_mode()
 			
 			case p_KEY:
 				
-				print_refresh_list();
+				print_characters();
 
 			break;
 		}
@@ -373,15 +400,15 @@ void insert_mode()
 
 			default:
 
-				insert_characters_linkedlist();
+				insert_characters_linkedlist(key_pressed);
 		}
 	}
 }
 
 
-void insert_characters_linkedlist()
+void insert_characters_linkedlist(int data)
 {
-	new_node = create_node(key_pressed);
+	new_node = create_node(data);
 
 	if (head == NULL)
 	{
@@ -430,12 +457,7 @@ void delete_one_character()
 	}
 }
 
-void print_character()
-{
-
-}
-
-void print_refresh_list()
+void print_characters()
 {
 	node * current_node = head;
 	while(current_node != NULL)
