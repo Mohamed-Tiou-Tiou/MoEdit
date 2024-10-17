@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <ncurses.h>
 
 #define ESC_KEY 27
@@ -16,6 +17,7 @@
 void file_handling(char * file_name);
 void open_file(char * file_name);
 void get_characters(FILE * file);
+void save_file(char * file_name);
 void windows_handling();
 void clean_all_windows();
 void draw_main_window();
@@ -150,6 +152,20 @@ void get_characters(FILE * file)
 		insert_characters_linkedlist(buffer);
 	}
 	delete_one_character();  //just a quick fix before i dig in why the output skips a space
+}
+
+void save_file(char * file_name)
+{
+	current_file = fopen(file_name, "w");
+	node * current_node = head;
+	while (current_node != NULL)
+	{
+		fputc(current_node->character, current_file);
+		current_node = current_node->next;
+	}
+	free(current_node);
+	current_node = NULL;
+	fclose(current_file);
 }
 
 void windows_handling()
@@ -493,7 +509,7 @@ void command_mode()
 		wrefresh(command_window);
 		while ((key_pressed = getch()) != ENTER_KEY)
 		{
-			if (itteration < 10)
+			if (itteration < 10 && itteration >= 0)
 			{
 				if (key_pressed != BACK_SPACE_KEY)
 				{
@@ -548,10 +564,20 @@ void command_mode_parser(char *command_input, int itteration)
 		switch (command_input[i])
 		{
 			case 'w':
+				
+				wclear(status_window);
+				draw_status_window();
+				wrefresh(status_window);
+				mvwprintw(status_window, 1, 1, " FILE SAVED ");
+				wrefresh(status_window);
+				wrefresh(main_window);
+				save_file("test.txt");
+				sleep(1);
 
 			break;
 
 			case 'q':
+
 
 			break;
 		}
