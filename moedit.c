@@ -14,10 +14,10 @@
 #define l_KEY 108
 #define h_KEY 104
 
-void file_handling(char * file_name);
-void open_file(char * file_name);
+void file_handling();
+void open_file();
 void get_characters(FILE * file);
-void save_file(char * file_name);
+void save_file();
 void windows_handling();
 void clean_all_windows();
 void draw_main_window();
@@ -46,6 +46,8 @@ int normal_mode_is_active = 1;
 int insert_mode_is_active = 0;
 int command_mode_is_active = 0;
 int explorer_mode_is_active = 0;
+
+char * current_file_name;
 
 int key_pressed;
 
@@ -116,8 +118,9 @@ int main(int argc, char * argv[])
 	}
 	else
 	{
+		current_file_name = argv[1];
 		windows_handling();
-		file_handling(argv[1]);
+		file_handling();
 		mode_handling();
 		clean_all_windows();
 	}
@@ -125,9 +128,9 @@ int main(int argc, char * argv[])
 	return 0;
 }
 
-void file_handling(char * file_name)
+void file_handling()
 {
-	open_file(file_name);
+	open_file();
 	if (current_file != NULL)
 	{
 		get_characters(current_file);
@@ -135,9 +138,9 @@ void file_handling(char * file_name)
 	}
 }
 
-void open_file(char * file_name)
+void open_file()
 {
-	current_file = fopen(file_name, "r");
+	current_file = fopen(current_file_name, "r");
 	if (current_file == NULL)
 	{
 		printf("There were problems trying to open the file\n");
@@ -154,9 +157,9 @@ void get_characters(FILE * file)
 	delete_one_character();  //just a quick fix before i dig in why the output skips a space
 }
 
-void save_file(char * file_name)
+void save_file()
 {
-	current_file = fopen(file_name, "w");
+	current_file = fopen(current_file_name, "w");
 	node * current_node = head;
 	while (current_node != NULL)
 	{
@@ -571,7 +574,7 @@ void command_mode_parser(char *command_input, int itteration)
 				mvwprintw(status_window, 1, 1, " FILE SAVED ");
 				wrefresh(status_window);
 				wrefresh(main_window);
-				save_file("test.txt");
+				save_file();
 				sleep(1);
 
 			break;
