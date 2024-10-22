@@ -166,7 +166,6 @@ void get_characters(FILE * file)
 	{
 		insert_characters_linkedlist(buffer); //inserts the characters from the buffer into the linkedlist
 	}
-	delete_one_character();
 }
 
 void save_file() //saves the current file
