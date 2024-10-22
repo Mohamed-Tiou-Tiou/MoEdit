@@ -49,6 +49,8 @@ struct stat filestat;
 
 int cursor_y = 1;
 int cursor_x = 1;
+int cursor_x_max = 1;
+int cursor_y_max = 1;
 
 int editor_is_active = 1;
 int normal_mode_is_active = 1;
@@ -164,7 +166,7 @@ void get_characters(FILE * file)
 	{
 		insert_characters_linkedlist(buffer); //inserts the characters from the buffer into the linkedlist
 	}
-	delete_one_character();  //just a quick fix before i dig in why the output skips a space
+	delete_one_character();
 }
 
 void save_file() //saves the current file
@@ -337,7 +339,7 @@ void normal_mode() //the main algorithm responsable for normal mode
 		{
 			case j_KEY:
 
-				if (cursor_y < main_window_y - 2)
+				if (cursor_y < main_window_y - 2 && cursor_y < cursor_y_max)
 				{
 					cursor_y++;
 					wmove(main_window, cursor_y, cursor_x);
@@ -359,7 +361,7 @@ void normal_mode() //the main algorithm responsable for normal mode
 
 			case l_KEY:
 
-				if (cursor_x < main_window_x - 2)
+				if (cursor_x < main_window_x - 2 && cursor_x < cursor_x_max)
 				{
 					cursor_x++;
 					wmove(main_window, cursor_y, cursor_x);
@@ -447,12 +449,34 @@ void insert_mode()
 			case BACK_SPACE_KEY: //delete key
 
 				delete_one_character();
+				if (cursor_x <= 1 && cursor_y > 1)
+				{
+					cursor_y--;
+					cursor_x = main_window_x - 2;
+					getyx(main_window, cursor_y_max, cursor_x_max);
+					mvwprintw(main_window, cursor_y, cursor_x, "%c", ' ');
+					wmove(main_window, cursor_y, cursor_x);
+					wrefresh(main_window);
+				}
+				else if (!(cursor_x <= 1))
+				{
+					cursor_x--;
+					getyx(main_window, cursor_y_max, cursor_x_max);
+					mvwprintw(main_window, cursor_y, cursor_x, "%c", ' ');
+					wmove(main_window, cursor_y, cursor_x);
+					wrefresh(main_window);
+				}
 				
 			break;
 
 			default:
 
 				insert_characters_linkedlist(key_pressed);
+				check_if_cursor_at_border_insert_mode();
+				mvwprintw(main_window, cursor_y, cursor_x, "%c", key_pressed);
+				wrefresh(main_window);
+				cursor_x++;
+				getyx(main_window, cursor_y_max, cursor_x_max);
 		}
 	}
 }
@@ -512,7 +536,7 @@ void delete_one_character()
 void print_characters()
 {
 	node * current_node = head;
-	while(current_node != NULL)
+	while (current_node != NULL)
 	{
 		check_if_cursor_at_border_insert_mode();
 		mvwprintw(main_window, cursor_y, cursor_x, "%c", current_node->character);
@@ -520,6 +544,8 @@ void print_characters()
 		current_node = current_node->next;
 		cursor_x++;
 	}
+
+	getyx(main_window, cursor_y_max, cursor_x_max);
 
 	free(current_node);
 	current_node = NULL;
