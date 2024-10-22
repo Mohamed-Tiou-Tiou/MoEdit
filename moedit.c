@@ -361,7 +361,7 @@ void normal_mode() //the main algorithm responsable for normal mode
 
 			case l_KEY:
 
-				if (cursor_x < main_window_x - 2 && cursor_x < cursor_x_max)
+				if (cursor_x < main_window_x - 2 && cursor_x < cursor_x_max && cursor_x != 1 && cursor_x_max != 1)
 				{
 					cursor_x++;
 					wmove(main_window, cursor_y, cursor_x);
