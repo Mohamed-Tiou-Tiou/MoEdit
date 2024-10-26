@@ -48,6 +48,7 @@ void explorer_mode();
 void open_directory();
 void store_directory();
 void check_what_mode_im_in();
+int border_touched();
 
 FILE * current_file = NULL;
 DIR * current_dir = NULL;
@@ -125,7 +126,6 @@ line * first_line = NULL;
 line * new_line = NULL;
 line * last_line = NULL;
 
-
 node * create_node(int new_character_ascii)
 {
 	node * new_node = (node*)malloc(sizeof(node));
@@ -147,6 +147,8 @@ line * create_line(int line_num)
 {
 	line * new_line = (line*)malloc(sizeof(line));
 	new_line->number = line_num;
+	new_line->x = 0;
+	new_line->y = 0;
 	new_line->child_head = NULL;
 	new_line->child_tail = NULL;
 	new_line->prev = NULL;
@@ -163,7 +165,7 @@ int main(int argc, char * argv[])
 	}
 	else
 	{
-		current_file_name = argv[1]; //assigns the second argument which is the file name
+		current_file_name = argv[1];
 		start_windows();
 		file_handling();
 		draw_windows();
@@ -185,7 +187,7 @@ void file_handling()
 
 void open_file()
 {
-	current_file = fopen(current_file_name, "r"); //opens the targeted file in reading mode
+	current_file = fopen(current_file_name, "r");
 	if (current_file == NULL)
 	{
 		printf("There were problems trying to open the file\n");
@@ -195,37 +197,47 @@ void open_file()
 void get_characters(FILE * file)
 {
 	int buffer;
-	while ((buffer = fgetc(file)) != EOF) //stores each character into buffer from file under an ascii code
+	int val = border_touched();
+	create_new_line(line_itteration);
+	while ((buffer = fgetc(file)) != EOF)
 	{
-		create_new_line(line_itteration);
-		insert_characters_linkedlist(buffer); //inserts the characters from the buffer into the linkedlist
+		if (buffer == 1)
+		{
+			line_itteration++;
+			create_new_line(line_itteration);
+			head = NULL;
+			tail = NULL;
+			head->prev = NULL;
+			head->next = NULL;
+		}
+		insert_characters_linkedlist(buffer);
 	}
 }
 
-void save_file() //saves the current file
+void save_file()
 {
-	current_file = fopen(current_file_name, "w"); //opens the file in write mode and assigns it to current_file
-	node * current_node = head; //assigns the head of the linkedlist to current_node
-	while (current_node != NULL) //begins a loop under the condition that the pointed value of current_node is not NULL
+	current_file = fopen(current_file_name, "w");
+	node * current_node = head;
+	while (current_node != NULL)
 	{
-		fputc(current_node->character, current_file); //writes the character that current_node holds into current_file
-		current_node = current_node->next; //sets the current_node to point to the next node in the linked list
+		fputc(current_node->character, current_file);
+		current_node = current_node->next;
 	}
-	free(current_node); //frees current_node to avoid memory leak
-	current_node = NULL; //assigns a NULL pointer to current_node
-	fclose(current_file); //closes the current_file, now current_file points to NULL
+	free(current_node);
+	current_node = NULL;
+	fclose(current_file);
 }
 
 void start_windows()
 {
-	initscr(); //initialises a new empty terminal window
-	noecho(); //disables echoing of typed characters, without this, every character you type will be printed
+	initscr();
+	noecho();
 	cbreak();
 
 	rows = 0;
 	coloms = 0;
 	
-	getmaxyx(stdscr, rows, coloms); //gets the max x y value of the standard screen and stores it into rows and coloms respectively
+	getmaxyx(stdscr, rows, coloms);
 	
 	start_explorer_window();
 	start_description_window();
@@ -347,7 +359,7 @@ void draw_command_window()
 	wrefresh(command_window);
 }
 
-void quit() //quits the program by reseting the values to 0
+void quit()
 {
 	editor_is_active = 0;
 	normal_mode_is_active = 0;
@@ -364,27 +376,27 @@ void quit() //quits the program by reseting the values to 0
 	delwin(description_window);
 	explorer_window = NULL;
 	delwin(explorer_window);
-	endwin(); //closes the standard window
+	endwin();
 }
 
 void mode_handling()
 { 
-	wmove(main_window, cursor_y, cursor_x); //moves the cursor to the main window according to its x and y values
-	wrefresh(main_window); //refreshes the window to display the changes
-	while (editor_is_active == 1) //begins a loop where the main mode handling system executes
+	wmove(main_window, cursor_y, cursor_x);
+	wrefresh(main_window);
+	while (editor_is_active == 1)
 	{
-		normal_mode(); //calls the normal mode function
-		insert_mode(); //calls the insert mode function
-		command_mode(); //calls the command mode function
-		explorer_mode(); //calls the explorer mode function
+		normal_mode();
+		insert_mode();
+		command_mode();
+		explorer_mode();
 	}
 }
 
-void normal_mode() //the main algorithm responsable for normal mode
+void normal_mode()
 {
 	if (normal_mode_is_active == 1)
 	{
-		check_what_mode_im_in(); // if normal mode is active, it registers the current mode
+		check_what_mode_im_in();
 	}
 
 	while (normal_mode_is_active == 1)
@@ -598,10 +610,21 @@ void delete_line()
 
 void print_characters()
 {
-	create_new_line(1);
+	int val = border_touched();
 	line * current_line = first_line;
 	while (current_line->child_head != NULL)
 	{
+		mvwprintw(main_window, cursor_y, cursor_x, "%c", current_line->child_head->character);
+		if (current_line->child_head->character == NEW_LINE_CHARACTER || val == 1)
+		{
+			cursor_y++;
+			cursor_x = 1;
+		}
+		if (current_line->child_head == NULL)
+		{
+			current_line = current_line->next;
+		}
+		current_line->child_head = current_line->child_head->next;
 	}
 
 	
@@ -778,3 +801,14 @@ void check_what_mode_im_in()
 	}
 }
 
+int border_touched()
+{
+	if (cursor_x < main_window_x - 2)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
