@@ -40,6 +40,7 @@ void normal_mode();
 void insert_mode();
 void insert_characters_linkedlist(int data);
 void delete_one_character();
+void create_new_line();
 void print_characters();
 void command_mode();
 void command_mode_parser(char * command_input, int itteration);
@@ -47,12 +48,13 @@ void explorer_mode();
 void open_directory();
 void store_directory();
 void check_what_mode_im_in();
-void check_if_cursor_at_border_insert_mode();
 
 FILE * current_file = NULL;
 DIR * current_dir = NULL;
 struct dirent * dir_ptr = NULL;
 struct stat filestat;
+
+int line_itteration = 1;
 
 int cursor_y = 1;
 int cursor_x = 1;
@@ -99,17 +101,30 @@ int warning_window_x;
 typedef struct node
 {
 	char character;
-
 	struct node * prev;
 	struct node * next;
-
 }node;
+
+typedef struct line
+{
+	int number;
+	int x;
+	int y;
+	node * child_head;
+	node * child_tail;
+	struct line * prev;
+	struct line * next;
+}line;
 
 node * head = NULL;
 node * tail = NULL; 
 node * new_node = NULL;
 node * head2 = NULL;
 node * tail2 = NULL;
+line * first_line = NULL;
+line * new_line = NULL;
+line * last_line = NULL;
+
 
 node * create_node(int new_character_ascii)
 {
@@ -128,6 +143,16 @@ node * create_node(int new_character_ascii)
 	return new_node;
 }
 
+line * create_line(int line_num)
+{
+	line * new_line = (line*)malloc(sizeof(line));
+	new_line->number = line_num;
+	new_line->child_head = NULL;
+	new_line->child_tail = NULL;
+	new_line->prev = NULL;
+	new_line->next = NULL;
+	return new_line;
+}
 
 int main(int argc, char * argv[])
 {
@@ -172,6 +197,7 @@ void get_characters(FILE * file)
 	int buffer;
 	while ((buffer = fgetc(file)) != EOF) //stores each character into buffer from file under an ascii code
 	{
+		create_new_line(line_itteration);
 		insert_characters_linkedlist(buffer); //inserts the characters from the buffer into the linkedlist
 	}
 }
@@ -478,34 +504,11 @@ void insert_mode()
 			case BACK_SPACE_KEY: //delete key
 
 				delete_one_character();
-				if (cursor_x <= 1 && cursor_y > 1)
-				{
-					cursor_y--;
-					cursor_x = main_window_x - 2;
-					getyx(main_window, cursor_y_max, cursor_x_max);
-					mvwprintw(main_window, cursor_y, cursor_x, "%c", ' ');
-					wmove(main_window, cursor_y, cursor_x);
-					wrefresh(main_window);
-				}
-				else if (!(cursor_x <= 1))
-				{
-					cursor_x--;
-					getyx(main_window, cursor_y_max, cursor_x_max);
-					mvwprintw(main_window, cursor_y, cursor_x, "%c", ' ');
-					wmove(main_window, cursor_y, cursor_x);
-					wrefresh(main_window);
-				}
 				
 			break;
 
 			default:
 
-				insert_characters_linkedlist(key_pressed);
-				check_if_cursor_at_border_insert_mode();
-				mvwprintw(main_window, cursor_y, cursor_x, "%c", key_pressed);
-				wrefresh(main_window);
-				cursor_x++;
-				getyx(main_window, cursor_y_max, cursor_x_max);
 		}
 	}
 }
@@ -562,27 +565,48 @@ void delete_one_character()
 	}
 }
 
+void create_new_line(int num)
+{
+	new_line = create_line(num);
+	if (first_line == NULL)
+	{
+		first_line = new_line;
+		last_line = new_line;
+		
+		first_line->child_head = head;
+		first_line->child_tail = tail;
+		first_line->prev = NULL;
+		first_line->next = NULL;
+	}
+	else
+	{
+		if (first_line->next == NULL || last_line->prev == NULL)
+		{
+			first_line->next = new_line;
+			last_line->prev = new_line;	
+		}
+
+		last_line->next = new_line;
+		new_line->prev = last_line;
+		last_line = new_line;
+	}
+}
+
+void delete_line()
+{
+}
+
 void print_characters()
 {
-	node * current_node = head;
-	while (current_node != NULL)
+	create_new_line(1);
+	line * current_line = first_line;
+	while (current_line->child_head != NULL)
 	{
-		check_if_cursor_at_border_insert_mode();
-		mvwprintw(main_window, cursor_y, cursor_x, "%c", current_node->character);
-		if (current_node->character == NEW_LINE_CHARACTER)
-		{
-			cursor_y++;
-			cursor_x = 0;
-		}
-		wrefresh(main_window);
-		current_node = current_node->next;
-		cursor_x++;
 	}
 
-	getyx(main_window, cursor_y_max, cursor_x_max);
-
-	free(current_node);
-	current_node = NULL;
+	
+	free(current_line);
+	current_line = NULL;
 }
 
 void command_mode()
@@ -754,11 +778,3 @@ void check_what_mode_im_in()
 	}
 }
 
-void check_if_cursor_at_border_insert_mode()
-{
-	if (cursor_x > main_window_x - 2)
-	{
-		cursor_y++;
-		cursor_x = 1;
-	}
-}
