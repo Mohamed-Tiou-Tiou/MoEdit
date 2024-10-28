@@ -38,7 +38,7 @@ void draw_command_window();
 void mode_handling();
 void normal_mode();
 void insert_mode();
-void insert_line_character(int character);
+void insert_delete_line_character(int character);
 void print_characters();
 void command_mode();
 void command_mode_parser(char * command_input, int itteration);
@@ -53,10 +53,9 @@ FILE * current_file = NULL;
 //struct stat filestat;*/
 
 //int line_itteration = 1;
-
+int count = 1;
 int cursor_y = 1;
 int cursor_x = 1;
-int cursor_x_max = 1;
 int cursor_y_max = 1;
 
 int editor_is_active = 1;
@@ -105,6 +104,7 @@ struct CHARACTER
 
 struct LINE
 {
+	int char_amount;
     struct LINE * line_prev;
     struct LINE * line_next;
     struct CHARACTER * child_head;
@@ -113,6 +113,7 @@ struct LINE
 
 struct LINE * line_head = NULL;
 struct LINE * line_tail = NULL;
+struct LINE * current_line = NULL;
 struct CHARACTER * temp_head = NULL;
 struct CHARACTER * temp_tail = NULL;
 
@@ -173,41 +174,53 @@ void open_file()
 	}
 }
 
-void insert_line_character(int character)
+void insert_delete_line_character(int character)
 {
-    if (character != NEW_LINE_CHARACTER)
+    switch (character)
     {
-        struct CHARACTER * new_character = create_character(character);
-        if (temp_head == NULL)
-        {
-            temp_head = new_character;
-            temp_tail = new_character;
-        }
-        else
-        {
-            temp_tail->character_next = new_character;
-            new_character->character_prev = temp_tail;
-            temp_tail = new_character;
-        }
-    }
-    else if (character == NEW_LINE_CHARACTER)
-    {
-        struct LINE * new_line = create_line();
-        new_line->child_head = temp_head;
-        new_line->child_tail = temp_tail;
-        if (line_head == NULL)
-        {
-            line_head = new_line;
-            line_tail = new_line;
-        }
-        else
-        {
-            line_tail->line_next = new_line;
-            new_line->line_prev = line_tail;
-            line_tail = new_line;
-        }
-        temp_head = NULL;
-        temp_tail = NULL;
+		default:
+
+			struct CHARACTER * new_character = create_character(character);
+			if (temp_head == NULL)
+			{
+				temp_head = new_character;
+				temp_tail = new_character;
+			}
+			else
+			{
+				temp_tail->character_next = new_character;
+				new_character->character_prev = temp_tail;
+				temp_tail = new_character;
+			}
+			count++;
+
+		break;
+
+		case NEW_LINE_CHARACTER:
+
+			struct LINE * new_line = create_line();
+			new_line->char_amount = count;
+			count = 1;
+			new_line->child_head = temp_head;
+			new_line->child_tail = temp_tail;
+			if (line_head == NULL)
+			{
+				line_head = new_line;
+				line_tail = new_line;
+			}
+			else
+			{
+				line_tail->line_next = new_line;
+				new_line->line_prev = line_tail;
+				line_tail = new_line;
+			}
+			temp_head = NULL;
+			temp_tail = NULL;
+
+		break;
+
+		case BACK_SPACE_KEY:
+		break;
     }
 }
 
@@ -216,7 +229,7 @@ void get_characters(FILE * file)
 	int buffer;
     while ((buffer = fgetc(file)) != EOF)
     {
-        insert_line_character(buffer);
+        insert_delete_line_character(buffer);
     }
 }
 
@@ -411,9 +424,11 @@ void normal_mode()
 		{
 			case j_KEY:
 
-				if (cursor_y < main_window_y - 2 && cursor_y < cursor_y_max)
+				if (cursor_y < main_window_y - 2 && cursor_y < cursor_y_max && current_line->line_next != NULL)
 				{
 					cursor_y++;
+					current_line = current_line->line_next;
+					cursor_x = current_line->char_amount;
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
 				}
@@ -422,9 +437,11 @@ void normal_mode()
 
 			case k_KEY:
 			
-				if (cursor_y > 1)
+				if (cursor_y > 1 && current_line->line_prev != NULL)
 				{
 					cursor_y--;
+					current_line = current_line->line_prev;
+					cursor_x = current_line->char_amount;
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
 				}
@@ -433,7 +450,7 @@ void normal_mode()
 
 			case l_KEY:
 
-				if (cursor_x < main_window_x - 2 && cursor_x < cursor_x_max && cursor_x != 1 && cursor_x_max != 1)
+				if (cursor_x < main_window_x - 2 && cursor_x < current_line->char_amount)
 				{
 					cursor_x++;
 					wmove(main_window, cursor_y, cursor_x);
@@ -500,6 +517,8 @@ void insert_mode()
 	{
 		switch (key_pressed = getch())
 		{
+			default:
+			break;
 			case ESC_KEY:
 			
 				normal_mode_is_active = 1;
@@ -522,16 +541,8 @@ void insert_mode()
 
 				
 			break;
-
-			default:
-
 		}
 	}
-}
-
-
-void insert_characters_linkedlist(int data)
-{
 }
 
 void delete_line_character()
@@ -559,24 +570,30 @@ void delete_line_character()
 	}*/
 }
 
-void delete_line()
-{
-}
-
 void print_characters()
 {
 	struct LINE * temp_line = line_head;
     while (temp_line != NULL)
     {
-		while (temp_line->child_head != NULL)
+		if (temp_line->child_head != NULL)
 		{
 			mvwprintw(main_window, cursor_y, cursor_x, "%c", temp_line->child_head->character);
 			wrefresh(main_window);
 			temp_line->child_head = temp_line->child_head->character_next;
 			cursor_x++;
 		}
-        temp_line = temp_line->line_next;
+		else if (temp_line->child_head == NULL)
+		{
+			temp_line = temp_line->line_next;
+			if (temp_line != NULL)
+			{
+				cursor_y++;
+				cursor_x = 1;
+				current_line = temp_line;
+			}
+		}
     }
+	cursor_y_max = cursor_y;
 }
 
 void command_mode()
