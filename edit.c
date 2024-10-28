@@ -54,6 +54,7 @@ FILE * current_file = NULL;
 
 //int line_itteration = 1;
 int count = 1;
+int cursor_pos = 1;
 int cursor_y = 1;
 int cursor_x = 1;
 int cursor_y_max = 1;
@@ -428,7 +429,14 @@ void normal_mode()
 				{
 					cursor_y++;
 					current_line = current_line->line_next;
-					cursor_x = current_line->char_amount;
+					if (current_line->char_amount > cursor_pos)
+					{
+						cursor_x = cursor_pos;
+					}
+					else
+					{
+						cursor_x = current_line->char_amount;
+					}
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
 				}
@@ -441,7 +449,14 @@ void normal_mode()
 				{
 					cursor_y--;
 					current_line = current_line->line_prev;
-					cursor_x = current_line->char_amount;
+					if (current_line->char_amount > cursor_pos)
+					{
+						cursor_x = cursor_pos;
+					}
+					else
+					{
+						cursor_x = current_line->char_amount;
+					}
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
 				}
@@ -453,6 +468,7 @@ void normal_mode()
 				if (cursor_x < main_window_x - 2 && cursor_x < current_line->char_amount)
 				{
 					cursor_x++;
+					cursor_pos = cursor_x;
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
 				}
@@ -464,6 +480,7 @@ void normal_mode()
 				if (cursor_x > 1)
 				{
 					cursor_x--;
+					cursor_pos = cursor_x;
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
 				}
@@ -594,6 +611,7 @@ void print_characters()
 		}
     }
 	cursor_y_max = cursor_y;
+	cursor_pos = cursor_x;
 }
 
 void command_mode()
