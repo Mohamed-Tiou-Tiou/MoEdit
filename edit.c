@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <sys/stat.h>
+//#include <unistd.h>
+//#include <dirent.h>
+//#include <sys/stat.h>
 #include <ncurses.h>
 
 #define ESC_KEY 27
@@ -38,24 +38,21 @@ void draw_command_window();
 void mode_handling();
 void normal_mode();
 void insert_mode();
-void insert_characters_linkedlist(int data);
-void delete_one_character();
-void create_new_line();
+void insert_line_character(int character);
 void print_characters();
 void command_mode();
 void command_mode_parser(char * command_input, int itteration);
 void explorer_mode();
-void open_directory();
-void store_directory();
+//void open_directory();
+//void store_directory();
 void check_what_mode_im_in();
-int border_touched();
 
 FILE * current_file = NULL;
-DIR * current_dir = NULL;
-struct dirent * dir_ptr = NULL;
-struct stat filestat;
+//DIR * current_dir = NULL;
+//struct dirent * dir_ptr = NULL;
+//struct stat filestat;*/
 
-int line_itteration = 1;
+//int line_itteration = 1;
 
 int cursor_y = 1;
 int cursor_x = 1;
@@ -99,61 +96,43 @@ WINDOW * warning_window;
 int warning_window_y;
 int warning_window_x;
 
-typedef struct node
+struct CHARACTER
 {
-	char character;
-	struct node * prev;
-	struct node * next;
-}node;
+    char character;
+    struct CHARACTER * character_prev;
+    struct CHARACTER * character_next;
+};
 
-typedef struct line
+struct LINE
 {
-	int number;
-	int x;
-	int y;
-	node * child_head;
-	node * child_tail;
-	struct line * prev;
-	struct line * next;
-}line;
+    struct LINE * line_prev;
+    struct LINE * line_next;
+    struct CHARACTER * child_head;
+    struct CHARACTER * child_tail;
+};
 
-node * head = NULL;
-node * tail = NULL; 
-node * new_node = NULL;
-node * head2 = NULL;
-node * tail2 = NULL;
-line * first_line = NULL;
-line * new_line = NULL;
-line * last_line = NULL;
+struct LINE * line_head = NULL;
+struct LINE * line_tail = NULL;
+struct CHARACTER * temp_head = NULL;
+struct CHARACTER * temp_tail = NULL;
 
-node * create_node(int new_character_ascii)
+struct LINE * create_line()
 {
-	node * new_node = (node*)malloc(sizeof(node));
-
-	if (new_node == NULL)
-	{
-		printf("Memory allocation of the new node failed!\n");
-		endwin();
-	}
-
-	new_node->character = (char)new_character_ascii;
-	new_node->prev = NULL;
-	new_node->next = NULL;
-
-	return new_node;
+    struct LINE * line = (struct LINE*)malloc(sizeof(struct LINE));
+    line->line_prev = NULL;
+    line->line_next = NULL;
+    line->child_head = NULL;
+    line->child_tail = NULL;
+    return line;
 }
 
-line * create_line(int line_num)
+struct CHARACTER * create_character(int input)
 {
-	line * new_line = (line*)malloc(sizeof(line));
-	new_line->number = line_num;
-	new_line->x = 0;
-	new_line->y = 0;
-	new_line->child_head = NULL;
-	new_line->child_tail = NULL;
-	new_line->prev = NULL;
-	new_line->next = NULL;
-	return new_line;
+    struct CHARACTER * character = (struct CHARACTER*)malloc(sizeof(struct CHARACTER));
+    character->character = (char)input;
+    character->character_prev = NULL;
+    character->character_next = NULL;
+    return character;
 }
 
 int main(int argc, char * argv[])
@@ -194,29 +173,56 @@ void open_file()
 	}
 }
 
+void insert_line_character(int character)
+{
+    if (character != NEW_LINE_CHARACTER)
+    {
+        struct CHARACTER * new_character = create_character(character);
+        if (temp_head == NULL)
+        {
+            temp_head = new_character;
+            temp_tail = new_character;
+        }
+        else
+        {
+            temp_tail->character_next = new_character;
+            new_character->character_prev = temp_tail;
+            temp_tail = new_character;
+        }
+    }
+    else if (character == NEW_LINE_CHARACTER)
+    {
+        struct LINE * new_line = create_line();
+        new_line->child_head = temp_head;
+        new_line->child_tail = temp_tail;
+        if (line_head == NULL)
+        {
+            line_head = new_line;
+            line_tail = new_line;
+        }
+        else
+        {
+            line_tail->line_next = new_line;
+            new_line->line_prev = line_tail;
+            line_tail = new_line;
+        }
+        temp_head = NULL;
+        temp_tail = NULL;
+    }
+}
+
 void get_characters(FILE * file)
 {
 	int buffer;
-	int val = border_touched();
-	create_new_line(line_itteration);
-	while ((buffer = fgetc(file)) != EOF)
-	{
-		if (buffer == 1)
-		{
-			line_itteration++;
-			create_new_line(line_itteration);
-			head = NULL;
-			tail = NULL;
-			head->prev = NULL;
-			head->next = NULL;
-		}
-		insert_characters_linkedlist(buffer);
-	}
+    while ((buffer = fgetc(file)) != EOF)
+    {
+        insert_line_character(buffer);
+    }
 }
 
 void save_file()
 {
-	current_file = fopen(current_file_name, "w");
+	/*current_file = fopen(current_file_name, "w");
 	node * current_node = head;
 	while (current_node != NULL)
 	{
@@ -225,7 +231,7 @@ void save_file()
 	}
 	free(current_node);
 	current_node = NULL;
-	fclose(current_file);
+	fclose(current_file);*/
 }
 
 void start_windows()
@@ -507,7 +513,6 @@ void insert_mode()
 
 				cursor_y++;
 				cursor_x = 1;
-				insert_characters_linkedlist(NEW_LINE_CHARACTER);
 				wmove(main_window, cursor_y, cursor_x);
 				wrefresh(main_window);
 
@@ -515,7 +520,6 @@ void insert_mode()
 
 			case BACK_SPACE_KEY: //delete key
 
-				delete_one_character();
 				
 			break;
 
@@ -528,33 +532,11 @@ void insert_mode()
 
 void insert_characters_linkedlist(int data)
 {
-	new_node = create_node(data);
-
-	if (head == NULL)
-	{
-		head = new_node;
-		tail = new_node;
-		
-		head->prev = NULL;
-		head->next = NULL;
-	}
-	else
-	{
-		if (head->next == NULL || tail->prev == NULL)
-		{
-			head->next = new_node;
-			tail->prev = new_node;	
-		}
-
-		tail->next = new_node;
-		new_node->prev = tail;
-		tail = new_node;
-	}
 }
 
-void delete_one_character()
+void delete_line_character()
 {
-	if (head == tail)
+	/*if (head == tail)
 	{
 		head = NULL;
 		tail = NULL;
@@ -574,34 +556,7 @@ void delete_one_character()
 		free(temp_node);
 		temp_node = NULL;
 		tail->next = NULL;
-	}
-}
-
-void create_new_line(int num)
-{
-	new_line = create_line(num);
-	if (first_line == NULL)
-	{
-		first_line = new_line;
-		last_line = new_line;
-		
-		first_line->child_head = head;
-		first_line->child_tail = tail;
-		first_line->prev = NULL;
-		first_line->next = NULL;
-	}
-	else
-	{
-		if (first_line->next == NULL || last_line->prev == NULL)
-		{
-			first_line->next = new_line;
-			last_line->prev = new_line;	
-		}
-
-		last_line->next = new_line;
-		new_line->prev = last_line;
-		last_line = new_line;
-	}
+	}*/
 }
 
 void delete_line()
@@ -610,26 +565,18 @@ void delete_line()
 
 void print_characters()
 {
-	int val = border_touched();
-	line * current_line = first_line;
-	while (current_line->child_head != NULL)
-	{
-		mvwprintw(main_window, cursor_y, cursor_x, "%c", current_line->child_head->character);
-		if (current_line->child_head->character == NEW_LINE_CHARACTER || val == 1)
+	struct LINE * temp_line = line_head;
+    while (temp_line != NULL)
+    {
+		while (temp_line->child_head != NULL)
 		{
-			cursor_y++;
-			cursor_x = 1;
+			mvwprintw(main_window, cursor_y, cursor_x, "%c", temp_line->child_head->character);
+			wrefresh(main_window);
+			temp_line->child_head = temp_line->child_head->character_next;
+			cursor_x++;
 		}
-		if (current_line->child_head == NULL)
-		{
-			current_line = current_line->next;
-		}
-		current_line->child_head = current_line->child_head->next;
-	}
-
-	
-	free(current_line);
-	current_line = NULL;
+        temp_line = temp_line->line_next;
+    }
 }
 
 void command_mode()
@@ -741,21 +688,21 @@ void explorer_mode()
 	
 	while (explorer_mode_is_active == 1)
 	{
-		open_directory();
-		store_directory();
+		//open_directory();
+		//store_directory();
 	}
 }
 
-void open_directory()
+/*void open_directory()
 {
 	current_dir = opendir(".");
 	if (current_dir == NULL)
 	{
 
 	}
-}
+}*/
 
-void store_directory()
+/*void store_directory()
 {
 	while ((dir_ptr = readdir(current_dir)) != NULL)
 	{
@@ -771,7 +718,7 @@ void store_directory()
 			}
 		}
 	}
-}
+}*/
 
 void check_what_mode_im_in()
 {
@@ -798,17 +745,5 @@ void check_what_mode_im_in()
 		mvwprintw(status_window, 1, 1, " EXPLORER MODE IS ACTIVE ");
 		wrefresh(status_window);
 		wrefresh(main_window);
-	}
-}
-
-int border_touched()
-{
-	if (cursor_x < main_window_x - 2)
-	{
-		return 1;
-	}
-	else
-	{
-		return 0;
 	}
 }
