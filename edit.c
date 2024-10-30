@@ -535,7 +535,7 @@ void insert_mode()
 			default:
 
 				insert_in_line(key_pressed);
-				print_all();
+				print_line();
 
 			break;
 			case ESC_KEY:
@@ -571,6 +571,7 @@ void insert_in_line(int character)
 		int itteration = 1;
 		struct LINE * temp_line = current_line;
 		struct CHARACTER * temp_head = temp_line->child_head;
+		struct CHARACTER * temp_tail = temp_line->child_tail;
 		struct CHARACTER * new_character = create_character(character);
 		if (temp_head != NULL)
 		{
@@ -578,33 +579,54 @@ void insert_in_line(int character)
 			{
 				temp_head = temp_line->child_head;
 				temp_head->character_prev = new_character;
+				new_character->character_prev = NULL;
 				new_character->character_next = temp_head;
 				temp_head = new_character;
-				//temp_line->char_amount++;
+				//cursor_pos++;
+				temp_line->char_amount++;
+
+				wclear(status_window);
+				draw_status_window();
+				mvwprintw(status_window, 1, 1, "inserted at beginning");
+				wrefresh(status_window);
+				wrefresh(main_window);
 			}
-			else if (cursor_pos == temp_line->char_amount)
+			else if (cursor_pos == temp_line->char_amount && temp_tail != NULL)
 			{
-				temp_head = temp_line->child_tail;
-				new_character->character_prev = temp_head;
-				new_character->character_next = NULL;
-				temp_head->character_next = new_character;
-				temp_head = new_character;
-				cursor_pos++;
-				//temp_line->char_amount++;
-			}
-			else
-			{
-				while (itteration < cursor_pos && temp_head != NULL)
+				while (itteration < cursor_pos - 1)
 				{
 					temp_head = temp_head->character_next;
 					itteration++;
 				}
-				new_character->character_prev = temp_head->character_prev;
-				new_character->character_next = temp_head->character_next;
-				temp_head->character_prev = new_character;
-				temp_head = temp_head->character_prev;
+				new_character->character_next = NULL;
 				temp_head->character_next = new_character;
-				//temp_line->char_amount++;
+				new_character->character_prev = temp_head;
+				temp_head = new_character;
+				cursor_pos++;
+				temp_line->char_amount++;
+				wclear(status_window);
+				draw_status_window();
+				mvwprintw(status_window, 1, 1, "inserted at end");
+				wrefresh(status_window);
+				wrefresh(main_window);
+			}
+			else
+			{
+				while (itteration < cursor_pos - 1)
+				{
+					temp_head = temp_head->character_next;
+					itteration++;
+				}
+				new_character->character_next = temp_head->character_next;
+				new_character->character_prev = temp_head;
+				temp_head->character_next = new_character;
+				cursor_pos++;
+				temp_line->char_amount++;
+				wclear(status_window);
+				draw_status_window();
+				mvwprintw(status_window, 1, 1, "inserted at middle");
+				wrefresh(status_window);
+				wrefresh(main_window);
 			}
 		}
 	}
@@ -673,7 +695,7 @@ void print_line()
 			temp_char = temp_char->character_next;
 			cursor_x++;
 		}
-		//cursor_x = cursor_pos;
+		cursor_x = cursor_pos;
 		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(main_window);
     }
