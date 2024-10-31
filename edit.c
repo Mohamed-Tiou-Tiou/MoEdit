@@ -56,7 +56,6 @@ FILE * current_file = NULL;
 
 //int line_itteration = 1;
 int count = 1;
-int cursor_pos = 1;
 int cursor_y = 1;
 int cursor_x = 1;
 int cursor_y_max = 1;
@@ -108,6 +107,7 @@ struct CHARACTER
 struct LINE
 {
 	int char_amount;
+	int cursor_pos;
     struct LINE * line_prev;
     struct LINE * line_next;
     struct CHARACTER * child_head;
@@ -123,6 +123,7 @@ struct CHARACTER * temp_tail = NULL;
 struct LINE * create_line()
 {
     struct LINE * line = (struct LINE*)malloc(sizeof(struct LINE));
+	line->cursor_pos = 1;
     line->line_prev = NULL;
     line->line_next = NULL;
     line->child_head = NULL;
@@ -203,6 +204,7 @@ void insert_from_file(int character)
 
 			struct LINE * new_line = create_line();
 			new_line->char_amount = count;
+			new_line->cursor_pos = count;
 			count = 1;
 			new_line->child_head = temp_head;
 			new_line->child_tail = temp_tail;
@@ -428,9 +430,9 @@ void normal_mode()
 				{
 					cursor_y++;
 					current_line = current_line->line_next;
-					if (current_line->char_amount > cursor_pos)
+					if (current_line->char_amount > current_line->cursor_pos)
 					{
-						cursor_x = cursor_pos;
+						cursor_x = current_line->cursor_pos;
 					}
 					else
 					{
@@ -448,9 +450,9 @@ void normal_mode()
 				{
 					cursor_y--;
 					current_line = current_line->line_prev;
-					if (current_line->char_amount > cursor_pos)
+					if (current_line->char_amount > current_line->cursor_pos)
 					{
-						cursor_x = cursor_pos;
+						cursor_x = current_line->cursor_pos;
 					}
 					else
 					{
@@ -467,7 +469,7 @@ void normal_mode()
 				if (cursor_x < main_window_x - 2 && cursor_x < current_line->char_amount)
 				{
 					cursor_x++;
-					cursor_pos = cursor_x;
+					current_line->cursor_pos = cursor_x;
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
 				}
@@ -479,7 +481,7 @@ void normal_mode()
 				if (cursor_x > 1)
 				{
 					cursor_x--;
-					cursor_pos = cursor_x;
+					current_line->cursor_pos = cursor_x;
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
 				}
@@ -571,18 +573,17 @@ void insert_in_line(int character)
 		int itteration = 1;
 		struct LINE * temp_line = current_line;
 		struct CHARACTER * temp_head = temp_line->child_head;
-		struct CHARACTER * temp_tail = temp_line->child_tail;
 		struct CHARACTER * new_character = create_character(character);
 		if (temp_head != NULL)
 		{
-			if (cursor_pos == 1)
+			if (temp_line->cursor_pos == 1)
 			{
 				temp_head = temp_line->child_head;
 				temp_head->character_prev = new_character;
 				new_character->character_prev = NULL;
 				new_character->character_next = temp_head;
 				temp_head = new_character;
-				//cursor_pos++;
+				//temp_line->cursor_pos++;
 				temp_line->char_amount++;
 
 				wclear(status_window);
@@ -591,9 +592,9 @@ void insert_in_line(int character)
 				wrefresh(status_window);
 				wrefresh(main_window);
 			}
-			else if (cursor_pos == temp_line->char_amount && temp_tail != NULL)
+			else if (temp_line->cursor_pos == temp_line->char_amount)
 			{
-				while (itteration < cursor_pos - 1)
+				while (itteration < (temp_line->cursor_pos) - 1)
 				{
 					temp_head = temp_head->character_next;
 					itteration++;
@@ -602,7 +603,7 @@ void insert_in_line(int character)
 				temp_head->character_next = new_character;
 				new_character->character_prev = temp_head;
 				temp_head = new_character;
-				cursor_pos++;
+				temp_line->cursor_pos++;
 				temp_line->char_amount++;
 				wclear(status_window);
 				draw_status_window();
@@ -612,7 +613,7 @@ void insert_in_line(int character)
 			}
 			else
 			{
-				while (itteration < cursor_pos - 1)
+				while (itteration < (temp_line->cursor_pos - 1))
 				{
 					temp_head = temp_head->character_next;
 					itteration++;
@@ -620,7 +621,7 @@ void insert_in_line(int character)
 				new_character->character_next = temp_head->character_next;
 				new_character->character_prev = temp_head;
 				temp_head->character_next = new_character;
-				cursor_pos++;
+				temp_line->cursor_pos++;
 				temp_line->char_amount++;
 				wclear(status_window);
 				draw_status_window();
@@ -679,7 +680,7 @@ void print_all()
 		}
     }
 	cursor_y_max = cursor_y;
-	cursor_pos = cursor_x;
+	current_line->cursor_pos = cursor_x;
 }
 
 void print_line()
@@ -695,7 +696,7 @@ void print_line()
 			temp_char = temp_char->character_next;
 			cursor_x++;
 		}
-		cursor_x = cursor_pos;
+		cursor_x = current_line->cursor_pos;
 		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(main_window);
     }
