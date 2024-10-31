@@ -415,6 +415,12 @@ void mode_handling()
 
 void normal_mode()
 {
+	struct LINE * last_filled_line;
+	if (current_line->child_head != NULL && current_line->child_tail != NULL)
+	{
+		last_filled_line = current_line;
+	}
+
 	if (normal_mode_is_active == 1)
 	{
 		check_what_mode_im_in();
@@ -424,16 +430,11 @@ void normal_mode()
 	{
 		switch (key_pressed = getch())
 		{
-			struct LINE * last_filled_line;
 			case j_KEY:
 
 				if (cursor_y < main_window_y - 2 && cursor_y < cursor_y_max && current_line->line_next != NULL)
 				{
 					cursor_y++;
-					if (current_line->child_head != NULL && current_line->child_tail != NULL)
-					{
-						last_filled_line = current_line;
-					}
 					current_line = current_line->line_next;
 					if (current_line->char_amount > last_filled_line->cursor_pos)
 					{
@@ -456,10 +457,6 @@ void normal_mode()
 				if (cursor_y > 1 && current_line->line_prev != NULL)
 				{
 					cursor_y--;
-					if (current_line->child_head != NULL && current_line->child_tail != NULL)
-					{
-						last_filled_line = current_line;
-					}
 					current_line = current_line->line_prev;
 					if (current_line->char_amount > last_filled_line->cursor_pos)
 					{
@@ -482,6 +479,10 @@ void normal_mode()
 				if (cursor_x < main_window_x - 2 && cursor_x < current_line->char_amount)
 				{
 					cursor_x++;
+					if (current_line->child_head != NULL && current_line->child_tail != NULL)
+					{
+						last_filled_line = current_line;
+					}
 					current_line->cursor_pos = cursor_x;
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
@@ -494,6 +495,10 @@ void normal_mode()
 				if (cursor_x > 1)
 				{
 					cursor_x--;
+					if (current_line->child_head != NULL && current_line->child_tail != NULL)
+					{
+						last_filled_line = current_line;
+					}
 					current_line->cursor_pos = cursor_x;
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
