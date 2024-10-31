@@ -204,7 +204,7 @@ void insert_from_file(int character)
 
 			struct LINE * new_line = create_line();
 			new_line->char_amount = count;
-			new_line->cursor_pos = count;
+			//new_line->cursor_pos = count;
 			count = 1;
 			new_line->child_head = temp_head;
 			new_line->child_tail = temp_tail;
@@ -424,19 +424,26 @@ void normal_mode()
 	{
 		switch (key_pressed = getch())
 		{
+			struct LINE * last_filled_line;
 			case j_KEY:
 
 				if (cursor_y < main_window_y - 2 && cursor_y < cursor_y_max && current_line->line_next != NULL)
 				{
 					cursor_y++;
-					current_line = current_line->line_next;
-					if (current_line->char_amount > current_line->cursor_pos)
+					if (current_line->child_head != NULL && current_line->child_tail != NULL)
 					{
-						cursor_x = current_line->cursor_pos;
+						last_filled_line = current_line;
+					}
+					current_line = current_line->line_next;
+					if (current_line->char_amount > last_filled_line->cursor_pos)
+					{
+						cursor_x = last_filled_line->cursor_pos;
+						current_line->cursor_pos = cursor_x;
 					}
 					else
 					{
 						cursor_x = current_line->char_amount;
+						current_line->cursor_pos = cursor_x;
 					}
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
@@ -449,14 +456,20 @@ void normal_mode()
 				if (cursor_y > 1 && current_line->line_prev != NULL)
 				{
 					cursor_y--;
-					current_line = current_line->line_prev;
-					if (current_line->char_amount > current_line->cursor_pos)
+					if (current_line->child_head != NULL && current_line->child_tail != NULL)
 					{
-						cursor_x = current_line->cursor_pos;
+						last_filled_line = current_line;
+					}
+					current_line = current_line->line_prev;
+					if (current_line->char_amount > last_filled_line->cursor_pos)
+					{
+						cursor_x = last_filled_line->cursor_pos;
+						current_line->cursor_pos = cursor_x;
 					}
 					else
 					{
 						cursor_x = current_line->char_amount;
+						current_line->cursor_pos = cursor_x;
 					}
 					wmove(main_window, cursor_y, cursor_x);
 					wrefresh(main_window);
