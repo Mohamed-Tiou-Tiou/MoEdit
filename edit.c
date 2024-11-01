@@ -117,6 +117,7 @@ struct LINE
 struct LINE * line_head = NULL;
 struct LINE * line_tail = NULL;
 struct LINE * current_line = NULL;
+struct LINE * last_filled_line = NULL;
 struct CHARACTER * temp_head = NULL;
 struct CHARACTER * temp_tail = NULL;
 
@@ -204,7 +205,6 @@ void insert_from_file(int character)
 
 			struct LINE * new_line = create_line();
 			new_line->char_amount = count;
-			//new_line->cursor_pos = count;
 			count = 1;
 			new_line->child_head = temp_head;
 			new_line->child_tail = temp_tail;
@@ -415,7 +415,6 @@ void mode_handling()
 
 void normal_mode()
 {
-	struct LINE * last_filled_line;
 	if (current_line->child_head != NULL && current_line->child_tail != NULL)
 	{
 		last_filled_line = current_line;
@@ -586,68 +585,68 @@ void insert_mode()
 
 void insert_in_line(int character)
 {
-	if (current_line != NULL)
+	if (current_line != NULL && current_line->child_head != NULL)
 	{
-		int itteration = 1;
-		struct LINE * temp_line = current_line;
-		struct CHARACTER * temp_head = temp_line->child_head;
 		struct CHARACTER * new_character = create_character(character);
-		if (temp_head != NULL)
+		if (current_line->cursor_pos == 1)
 		{
-			if (temp_line->cursor_pos == 1)
-			{
-				temp_head = temp_line->child_head;
-				temp_head->character_prev = new_character;
-				new_character->character_prev = NULL;
-				new_character->character_next = temp_head;
-				temp_head = new_character;
-				//temp_line->cursor_pos++;
-				temp_line->char_amount++;
+			new_character->character_prev = NULL;
+			new_character->character_next = current_line->child_head;
+			current_line->child_head->character_prev = new_character;
+			current_line->child_head = new_character;
+			current_line->cursor_pos++;
+			current_line->char_amount++;
 
-				wclear(status_window);
-				draw_status_window();
-				mvwprintw(status_window, 1, 1, "inserted at beginning");
-				wrefresh(status_window);
-				wrefresh(main_window);
-			}
-			else if (temp_line->cursor_pos == temp_line->char_amount)
-			{
-				while (itteration < (temp_line->cursor_pos) - 1)
-				{
-					temp_head = temp_head->character_next;
-					itteration++;
-				}
-				new_character->character_next = NULL;
-				temp_head->character_next = new_character;
-				new_character->character_prev = temp_head;
-				temp_head = new_character;
-				temp_line->cursor_pos++;
-				temp_line->char_amount++;
-				wclear(status_window);
-				draw_status_window();
-				mvwprintw(status_window, 1, 1, "inserted at end");
-				wrefresh(status_window);
-				wrefresh(main_window);
-			}
-			else
-			{
-				while (itteration < (temp_line->cursor_pos - 1))
-				{
-					temp_head = temp_head->character_next;
-					itteration++;
-				}
-				new_character->character_next = temp_head->character_next;
-				new_character->character_prev = temp_head;
-				temp_head->character_next = new_character;
-				temp_line->cursor_pos++;
-				temp_line->char_amount++;
-				wclear(status_window);
-				draw_status_window();
-				mvwprintw(status_window, 1, 1, "inserted at middle");
-				wrefresh(status_window);
-				wrefresh(main_window);
-			}
+			wclear(status_window);
+			draw_status_window();
+			mvwprintw(status_window, 1, 1, "inserted at beginning");
+			wrefresh(status_window);
+			wrefresh(main_window);
 		}
+		else if (current_line->cursor_pos == current_line->char_amount)
+		{
+			new_character->character_next = NULL;
+			current_line->child_tail->character_next = new_character;
+			new_character->character_prev = current_line->child_tail;
+			current_line->child_tail = new_character;
+			current_line->cursor_pos++;
+			current_line->char_amount++;
+			wclear(status_window);
+			draw_status_window();
+			mvwprintw(status_window, 1, 1, "inserted at end");
+			wrefresh(status_window);
+			wrefresh(main_window);
+		}
+		else
+		{
+			int itteration = 1;
+			struct LINE * temp_line = current_line;
+			struct CHARACTER * temp_head = temp_line->child_head;
+			struct CHARACTER * temp_tail = temp_line->child_tail;
+			while (itteration < (temp_line->cursor_pos) - 1)
+			{
+				temp_head = temp_head->character_next;
+				itteration++;
+			}
+			new_character->character_next = temp_head->character_next;
+			new_character->character_prev = temp_head;
+			temp_head->character_next = new_character;
+			temp_line->cursor_pos++;
+			temp_line->char_amount++;
+			wclear(status_window);
+			draw_status_window();
+			mvwprintw(status_window, 1, 1, "inserted at middle");
+			wrefresh(status_window);
+			wrefresh(main_window);
+		}
+	}
+	else if (current_line != NULL && current_line->child_head == NULL)
+	{
+		struct CHARACTER * new_character = create_character(character);
+		current_line->child_head = new_character;
+		current_line->child_tail = new_character;
+		current_line->cursor_pos++;
+		current_line->char_amount++;
 	}
 }
 
