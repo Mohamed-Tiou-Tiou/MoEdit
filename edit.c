@@ -435,7 +435,7 @@ void normal_mode()
 				{
 					cursor_y++;
 					current_line = current_line->line_next;
-					if (current_line->char_amount > last_filled_line->cursor_pos)
+					if (last_filled_line != NULL && current_line->char_amount > last_filled_line->cursor_pos)
 					{
 						cursor_x = last_filled_line->cursor_pos;
 						current_line->cursor_pos = cursor_x;
@@ -457,7 +457,7 @@ void normal_mode()
 				{
 					cursor_y--;
 					current_line = current_line->line_prev;
-					if (current_line->char_amount > last_filled_line->cursor_pos)
+					if (last_filled_line != NULL && current_line->char_amount > last_filled_line->cursor_pos)
 					{
 						cursor_x = last_filled_line->cursor_pos;
 						current_line->cursor_pos = cursor_x;
