@@ -634,6 +634,7 @@ void insert_in_line(int character)
 			}
 			new_character->character_next = temp_head->character_next;
 			new_character->character_prev = temp_head;
+			(temp_head->character_next)->character_prev = new_character;
 			temp_head->character_next = new_character;
 			temp_line->cursor_pos++;
 			temp_line->char_amount++;
