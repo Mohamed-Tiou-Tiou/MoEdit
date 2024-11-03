@@ -40,8 +40,10 @@ void normal_mode();
 void insert_mode();
 void insert_from_file(int character);
 void insert_in_line(int character);
+void delete_in_line();
 void print_all();
 void print_line();
+void clear_line();
 void command_mode();
 void command_mode_parser(char * command_input, int itteration);
 void explorer_mode();
@@ -577,7 +579,9 @@ void insert_mode()
 
 			case BACK_SPACE_KEY: //delete key
 
-				
+				delete_in_line();
+				print_line();	
+
 			break;
 		}
 	}
@@ -650,28 +654,71 @@ void insert_in_line(int character)
 	}
 }
 
-void delete_line_character()
+void delete_in_line()
 {
-	/*if (head == tail)
+	if (current_line != NULL && current_line->child_head != NULL)
 	{
-		head = NULL;
-		tail = NULL;
+		if (current_line->child_head == current_line->child_tail)
+		{
+			current_line->child_head = NULL;
+			current_line->child_tail = NULL;
+			current_line->cursor_pos--;
+			current_line->char_amount--;
+			wclear(status_window);
+			draw_status_window();
+			mvwprintw(status_window, 1, 1, "deleted at beginning");
+			wrefresh(status_window);
+			wrefresh(main_window);
+		}
+		else if (current_line->cursor_pos == current_line->char_amount)
+		{
+			struct CHARACTER * temp_char = current_line->child_tail;
+			current_line->child_tail = current_line->child_tail->character_prev;
+			(current_line->child_tail->character_next)->character_prev = NULL;
+			current_line->child_tail->character_next = NULL;
+			temp_char = NULL;
+			free(temp_char);
+			current_line->cursor_pos--;
+			current_line->char_amount--;
+			wclear(status_window);
+			draw_status_window();
+			mvwprintw(status_window, 1, 1, "deleted at end");
+			wrefresh(status_window);
+			wrefresh(main_window);
+		}
+		else
+		{
+			int itteration = 1;
+			struct LINE * temp_line = current_line;
+			struct CHARACTER * temp_head = temp_line->child_head;
+			while (itteration < (temp_line->cursor_pos) - 1)
+			{
+				temp_head = temp_head->character_next;
+				itteration++;
+			}
+			(temp_head->character_prev)->character_next = temp_head->character_next;
+			(temp_head->character_next)->character_prev = temp_head->character_prev;
+			temp_head->character_prev = NULL;
+			temp_head->character_next = NULL;
+			struct CHARACTER * temp_char = temp_head;
+			temp_char = NULL;
+			free(temp_char);
+			temp_line->cursor_pos--;
+			temp_line->char_amount--;
+			wclear(status_window);
+			draw_status_window();
+			mvwprintw(status_window, 1, 1, "deleted at middle");
+			wrefresh(status_window);
+			wrefresh(main_window);
+		}
 	}
-	else if (head->next != tail->prev)
+	/*else if (current_line != NULL && current_line->child_head == NULL)
 	{
-		node * temp_node = tail;
-		tail = tail->prev;
-		free(temp_node);
-		temp_node = NULL;
-		tail->next = NULL;
-	}
-	else if (head->next == tail->prev)
-	{
-		node * temp_node = tail;
-		tail = tail->prev;
-		free(temp_node);
-		temp_node = NULL;
-		tail->next = NULL;
+		struct CHARACTER * new_character = create_character(character);
+		current_line->child_head = new_character;
+		current_line->child_tail = new_character;
+		current_line->cursor_pos--;
+		current_line->char_amount--;
 	}*/
 }
 
@@ -707,6 +754,7 @@ void print_line()
 		struct LINE * temp_line = current_line;
 		struct CHARACTER * temp_char = temp_line->child_head;
 		cursor_x = 1;
+		clear_line();
 		while (temp_char != NULL)
 		{
 			mvwprintw(main_window, cursor_y, cursor_x, "%c", temp_char->character);
@@ -717,6 +765,16 @@ void print_line()
 		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(main_window);
     }
+}
+
+void clear_line()
+{
+	int itteration = 1;
+	while (itteration < main_window_x - 2)
+	{
+		mvwprintw(main_window, cursor_y, itteration, " ");
+		itteration++;
+	}
 }
 
 void command_mode()
