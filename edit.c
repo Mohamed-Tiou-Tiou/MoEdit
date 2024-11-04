@@ -406,6 +406,10 @@ void mode_handling()
 { 
 	wmove(main_window, cursor_y, cursor_x);
 	wrefresh(main_window);
+	if (current_line->child_head != NULL && current_line->child_tail != NULL)
+	{
+		last_filled_line = current_line;
+	}
 	while (editor_is_active == 1)
 	{
 		normal_mode();
@@ -417,10 +421,6 @@ void mode_handling()
 
 void normal_mode()
 {
-	if (current_line->child_head != NULL && current_line->child_tail != NULL)
-	{
-		last_filled_line = current_line;
-	}
 
 	if (normal_mode_is_active == 1)
 	{
