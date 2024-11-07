@@ -110,6 +110,7 @@ struct LINE
 {
 	int char_amount;
 	int cursor_pos;
+	int line_pos;
     struct LINE * line_prev;
     struct LINE * line_next;
     struct CHARACTER * child_head;
@@ -128,6 +129,7 @@ struct LINE * create_line()
 {
     struct LINE * line = (struct LINE*)malloc(sizeof(struct LINE));
 	line->cursor_pos = 1;
+	line->line_pos = 1;
     line->line_prev = NULL;
     line->line_next = NULL;
     line->child_head = NULL;
@@ -695,6 +697,15 @@ void delete_in_line()
 			{
 				struct LINE * line_ptr = current_line;
 				struct CHARACTER * char_ptr = (line_ptr->line_prev)->child_tail;
+				struct LINE * line_ptr2 = line_head;
+				int itteration = 1;
+				int line_prev_pos = cursor_y - 1;
+				while (itteration < line_prev_pos)
+				{
+					line_ptr2 = line_ptr2->line_next;
+					itteration++;
+				}
+				last_pointed_line = line_ptr2;
 				if (line_ptr->child_head != NULL)
 				{
 					// appending the characters in curr line to the previous line
@@ -726,7 +737,6 @@ void delete_in_line()
 					line_tail = line_tail->line_prev;
 					line_tail->line_next = NULL;
 				}	
-				last_pointed_line = line_ptr->line_prev;
 				line_ptr->line_prev = NULL;
 				line_ptr->line_next = NULL;
 				free(line_ptr);
@@ -778,6 +788,15 @@ void delete_in_line()
 	else if (current_line != NULL && current_line->child_head == NULL) // delete a line(empty) in the middle
 	{
 		struct LINE * line_ptr = current_line;
+		struct LINE * line_ptr2 = line_head;
+		int itteration = 1;
+		int line_prev_pos = cursor_y - 1;
+		while (itteration < line_prev_pos)
+		{
+			line_ptr2 = line_ptr2->line_next;
+			itteration++;
+		}
+		last_pointed_line = line_ptr2;
 		if (line_ptr != line_tail)
 		{
 			// removing curr line
@@ -790,7 +809,6 @@ void delete_in_line()
 			line_tail = line_tail->line_prev;
 			line_tail->line_next = NULL;
 		}	
-		last_pointed_line = line_ptr->line_prev;
 		line_ptr->line_prev = NULL;
 		line_ptr->line_next = NULL;
 		free(line_ptr);
@@ -802,29 +820,38 @@ void delete_in_line()
 void print_all()
 {
 	struct LINE * temp_line = line_head;
+	int itteration = 1;
 	wclear(main_window);
 	draw_main_window();
 	cursor_y = 1;
     while (temp_line != NULL)
     {
+		temp_line->line_pos = itteration;
 		struct CHARACTER * temp_head = temp_line->child_head;
 		while (temp_head != NULL)
 		{
 			mvwprintw(main_window, cursor_y, cursor_x, "%c", temp_head->character);
-			wrefresh(main_window);
 			temp_head = temp_head->character_next;
 			cursor_x++;
 		}
-		current_line = temp_line;
+		if (last_pointed_line != NULL)
+		{
+			current_line = last_pointed_line;
+		}
+		else
+		{
+			current_line = temp_line;
+		}
 		temp_line = temp_line->line_next;
 		if (temp_line != NULL)
 		{
 			cursor_y++;
 			cursor_x = 1;
+			itteration++;
 		}
     }
 	cursor_y_max = cursor_y;
-	current_line->cursor_pos = cursor_x;
+	wrefresh(main_window);
 }
 
 void print_line()
@@ -834,6 +861,7 @@ void print_line()
 		struct LINE * temp_line = current_line;
 		struct CHARACTER * temp_char = temp_line->child_head;
 		cursor_x = 1;
+		cursor_y = current_line->line_pos;
 		clear_line();
 		while (temp_char != NULL)
 		{
