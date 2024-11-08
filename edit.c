@@ -691,60 +691,57 @@ void delete_in_line()
 			wrefresh(status_window);
 			wrefresh(main_window);
 		}
-		else if (current_line->cursor_pos == 1) // delete a line(filled)
+		else if (current_line->cursor_pos == 1 && current_line != line_head) // delete a line(filled)
 		{
-			if (current_line != line_head)
+			struct LINE * line_ptr = current_line;
+			struct CHARACTER * char_ptr = (line_ptr->line_prev)->child_tail;
+			struct LINE * line_ptr2 = line_head;
+			int itteration = 1;
+			int line_prev_pos = cursor_y - 1;
+			while (itteration < line_prev_pos)
 			{
-				struct LINE * line_ptr = current_line;
-				struct CHARACTER * char_ptr = (line_ptr->line_prev)->child_tail;
-				struct LINE * line_ptr2 = line_head;
-				int itteration = 1;
-				int line_prev_pos = cursor_y - 1;
-				while (itteration < line_prev_pos)
-				{
-					line_ptr2 = line_ptr2->line_next;
-					itteration++;
-				}
-				last_pointed_line = line_ptr2;
-				if (line_ptr->child_head != NULL)
-				{
-					// appending the characters in curr line to the previous line
-					temp_head = current_line->child_head;
-					temp_tail = current_line->child_tail;
-					(line_ptr->line_prev)->child_tail->character_next = temp_head;
-					temp_head->character_prev = (line_ptr->line_prev)->child_tail;
-					while (char_ptr != NULL)
-					{
-						(line_ptr->line_prev)->child_tail = char_ptr;
-						char_ptr = char_ptr->character_next;
-						(line_ptr->line_prev)->char_amount++;
-						(line_ptr->line_prev)->cursor_pos++;
-					}
-					(line_ptr->line_prev)->char_amount--;
-					(line_ptr->line_prev)->cursor_pos--;
-					temp_head = NULL;
-					temp_tail = NULL;
-				}
-				if (line_ptr != line_tail)
-				{
-					// removing curr line
-					(line_ptr->line_prev)->line_next = (line_ptr->line_next);
-					(line_ptr->line_next)->line_prev = (line_ptr->line_prev);
-				}
-				else if (line_ptr == line_tail)
-				{
-					// removing last line
-					line_tail = line_tail->line_prev;
-					line_tail->line_next = NULL;
-				}	
-				line_ptr->line_prev = NULL;
-				line_ptr->line_next = NULL;
-				free(line_ptr);
-				// print the changes
-				print_all();
+				line_ptr2 = line_ptr2->line_next;
+				itteration++;
 			}
+			last_pointed_line = line_ptr2;
+			if (line_ptr->child_head != NULL)
+			{
+				// appending the characters in curr line to the previous line
+				temp_head = current_line->child_head;
+				temp_tail = current_line->child_tail;
+				(line_ptr->line_prev)->child_tail->character_next = temp_head;
+				temp_head->character_prev = (line_ptr->line_prev)->child_tail;
+				while (char_ptr != NULL)
+				{
+					(line_ptr->line_prev)->child_tail = char_ptr;
+					char_ptr = char_ptr->character_next;
+					(line_ptr->line_prev)->char_amount++;
+					(line_ptr->line_prev)->cursor_pos++;
+				}
+				(line_ptr->line_prev)->char_amount--;
+				(line_ptr->line_prev)->cursor_pos--;
+				temp_head = NULL;
+				temp_tail = NULL;
+			}
+			if (line_ptr != line_tail)
+			{
+				// removing curr line
+				(line_ptr->line_prev)->line_next = (line_ptr->line_next);
+				(line_ptr->line_next)->line_prev = (line_ptr->line_prev);
+			}
+			else if (line_ptr == line_tail)
+			{
+				// removing last line
+				line_tail = line_tail->line_prev;
+				line_tail->line_next = NULL;
+			}	
+			line_ptr->line_prev = NULL;
+			line_ptr->line_next = NULL;
+			free(line_ptr);
+			// print the changes
+			print_all();
 		}
-		else
+		else if (current_line->cursor_pos > 1)
 		{
 			int itteration = 1;
 			struct LINE * temp_line = current_line;
@@ -785,7 +782,7 @@ void delete_in_line()
 			wrefresh(main_window);
 		}
 	}
-	else if (current_line != NULL && current_line->child_head == NULL) // delete a line(empty) in the middle
+	else if (current_line != NULL && current_line != line_head && current_line->child_head == NULL) // delete a line(empty) in the middle
 	{
 		struct LINE * line_ptr = current_line;
 		struct LINE * line_ptr2 = line_head;
