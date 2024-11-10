@@ -43,6 +43,7 @@ void insert_in_line(int character);
 void delete_in_line();
 void print_all();
 void print_line();
+void line_enter();
 void clear_line();
 void command_mode();
 void command_mode_parser(char * command_input, int itteration);
@@ -121,13 +122,15 @@ struct LINE * line_head = NULL;
 struct LINE * line_tail = NULL;
 struct LINE * current_line = NULL;
 struct LINE * last_filled_line = NULL;
-struct LINE * last_pointed_line = NULL;
+struct LINE * last_pointed_line_delete = NULL;
+struct LINE * pointed_line_enter = NULL;
 struct CHARACTER * temp_head = NULL;
 struct CHARACTER * temp_tail = NULL;
 
 struct LINE * create_line()
 {
     struct LINE * line = (struct LINE*)malloc(sizeof(struct LINE));
+	line->char_amount = 1;
 	line->cursor_pos = 1;
 	line->line_pos = 1;
     line->line_prev = NULL;
@@ -573,7 +576,9 @@ void insert_mode()
 			break;
 
 			case ENTER_KEY:
-
+				
+				line_enter();	
+				print_line();
 				/*cursor_y++;
 				cursor_x = 1;
 				wmove(main_window, cursor_y, cursor_x);
@@ -703,7 +708,7 @@ void delete_in_line()
 				line_ptr2 = line_ptr2->line_next;
 				itteration++;
 			}
-			last_pointed_line = line_ptr2;
+			last_pointed_line_delete = line_ptr2;
 			if (line_ptr->child_head != NULL)
 			{
 				// appending the characters in curr line to the previous line
@@ -793,7 +798,7 @@ void delete_in_line()
 			line_ptr2 = line_ptr2->line_next;
 			itteration++;
 		}
-		last_pointed_line = line_ptr2;
+		last_pointed_line_delete = line_ptr2;
 		if (line_ptr != line_tail)
 		{
 			// removing curr line
@@ -820,6 +825,7 @@ void print_all()
 	int itteration = 1;
 	wclear(main_window);
 	draw_main_window();
+	cursor_x = 1;
 	cursor_y = 1;
     while (temp_line != NULL)
     {
@@ -831,14 +837,7 @@ void print_all()
 			temp_head = temp_head->character_next;
 			cursor_x++;
 		}
-		if (last_pointed_line != NULL)
-		{
-			current_line = last_pointed_line;
-		}
-		else
-		{
-			current_line = temp_line;
-		}
+		current_line = temp_line;
 		temp_line = temp_line->line_next;
 		if (temp_line != NULL)
 		{
@@ -855,6 +854,14 @@ void print_line()
 {
     if (current_line != NULL)
     {
+		if (last_pointed_line_delete != NULL && pointed_line_enter == NULL)
+		{
+			current_line = last_pointed_line_delete;
+		}
+		else if (last_pointed_line_delete == NULL && pointed_line_enter != NULL)
+		{
+			current_line = pointed_line_enter;
+		}
 		struct LINE * temp_line = current_line;
 		struct CHARACTER * temp_char = temp_line->child_head;
 		cursor_x = 1;
@@ -869,7 +876,33 @@ void print_line()
 		cursor_x = current_line->cursor_pos;
 		wmove(main_window, cursor_y, cursor_x);
 		wrefresh(main_window);
+
+		pointed_line_enter = NULL;
+		last_pointed_line_delete = NULL;
     }
+}
+
+void line_enter()
+{
+	struct LINE * enter_new_line = create_line();
+	if (current_line != line_tail)
+	{
+		enter_new_line->line_prev = current_line;
+		enter_new_line->line_next = current_line->line_next;
+		(current_line->line_next)->line_prev = enter_new_line;
+		current_line->line_next = enter_new_line;
+		current_line = current_line->line_next;
+		pointed_line_enter = current_line;
+		print_all();
+	}
+	else if (current_line == line_tail)
+	{
+		enter_new_line->line_next = NULL;
+		enter_new_line->line_prev = line_tail;
+		line_tail->line_next = enter_new_line;
+		line_tail = enter_new_line;
+		print_all();
+	}
 }
 
 void clear_line()
