@@ -440,10 +440,10 @@ void normal_mode()
 		{
 			case j_KEY:
 
-				if (cursor_y < main_window_y - 2 && cursor_y < cursor_y_max && current_line->line_next != NULL)
+				if (cursor_y < main_window_y - 2 && current_line->line_next != NULL)
 				{
-					cursor_y++;
 					current_line = current_line->line_next;
+					cursor_y = current_line->line_pos;
 					if (last_filled_line != NULL && current_line->char_amount > last_filled_line->cursor_pos)
 					{
 						cursor_x = last_filled_line->cursor_pos;
@@ -464,8 +464,8 @@ void normal_mode()
 			
 				if (cursor_y > 1 && current_line->line_prev != NULL)
 				{
-					cursor_y--;
 					current_line = current_line->line_prev;
+					cursor_y = current_line->line_pos;
 					if (last_filled_line != NULL && current_line->char_amount > last_filled_line->cursor_pos)
 					{
 						cursor_x = last_filled_line->cursor_pos;
@@ -833,13 +833,19 @@ void print_all()
 		struct CHARACTER * temp_head = temp_line->child_head;
 		while (temp_head != NULL)
 		{
+            if (cursor_x > main_window_x - 2)
+            {
+                cursor_y++;
+                cursor_x = 1;
+                itteration++;
+            }
 			mvwprintw(main_window, cursor_y, cursor_x, "%c", temp_head->character);
 			temp_head = temp_head->character_next;
 			cursor_x++;
 		}
 		current_line = temp_line;
 		temp_line = temp_line->line_next;
-		if (temp_line != NULL)
+		if (temp_line != NULL && cursor_x < main_window_x - 2)
 		{
 			cursor_y++;
 			cursor_x = 1;
@@ -864,12 +870,31 @@ void print_line()
 		}
 		struct LINE * temp_line = current_line;
 		struct CHARACTER * temp_char = temp_line->child_head;
+        int lines_count = 1;
 		cursor_x = 1;
 		cursor_y = current_line->line_pos;
-		clear_line();
+        int temp_cursor_y = cursor_y;
+        while (temp_char != NULL)
+        {
+            if (cursor_x > main_window_x - 2)
+            {
+                lines_count++;    
+                cursor_x = 0;
+            }
+			temp_char = temp_char->character_next;
+            cursor_x++;
+        }
+		clear_line(lines_count);
+		cursor_x = 1;
+		temp_char = temp_line->child_head;
 		while (temp_char != NULL)
 		{
-			mvwprintw(main_window, cursor_y, cursor_x, "%c", temp_char->character);
+            if (cursor_x > main_window_x - 2)
+            {
+                temp_cursor_y++;
+                cursor_x = 1;
+            }
+			mvwprintw(main_window, temp_cursor_y, cursor_x, "%c", temp_char->character);
 			temp_char = temp_char->character_next;
 			cursor_x++;
 		}
@@ -879,6 +904,29 @@ void print_line()
 
 		pointed_line_enter = NULL;
 		last_pointed_line_delete = NULL;
+    }
+}
+
+void clear_line(int lines_amount_to_clear)
+{
+	int itteration = 1;
+    int itteration2 = lines_amount_to_clear;
+    int count = 1;
+    int itteration_y = cursor_y;
+
+    while (count <= itteration2)
+    {
+        while (itteration < main_window_x - 2)
+        {
+            mvwprintw(main_window, itteration_y, itteration, " ");
+            itteration++;
+        }
+        if (itteration == main_window_x - 2)
+        {
+            itteration_y++;
+            itteration = 1;
+            count++;
+        }
     }
 }
 
@@ -902,16 +950,6 @@ void line_enter()
 		line_tail->line_next = enter_new_line;
 		line_tail = enter_new_line;
 		print_all();
-	}
-}
-
-void clear_line()
-{
-	int itteration = 1;
-	while (itteration < main_window_x - 2)
-	{
-		mvwprintw(main_window, cursor_y, itteration, " ");
-		itteration++;
 	}
 }
 
